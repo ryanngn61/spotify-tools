@@ -1,5 +1,5 @@
 import streamlit as st
-import test_sheets
+import test_sheet
 
 
 from new_releases import get_new_releases
