@@ -1,15 +1,5 @@
 import streamlit as st
 
-try:
-    from test_sheet import test_connection
-
-    if st.button("Test Google Sheets"):
-        test_connection()
-
-except Exception as e:
-    st.error(e)
-
-
 from new_releases import get_new_releases
 from shuffle_playlist import shuffle_playlist
 from split_playlists import update_english_playlist
