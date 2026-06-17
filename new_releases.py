@@ -1,9 +1,10 @@
-import json
 from datetime import datetime, timedelta
 
 import streamlit as st
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+
+from sheet_utils import get_artists
 
 
 # ======================
@@ -22,9 +23,8 @@ spotify = spotipy.Spotify(
 
 def get_new_releases():
 
-    # Load artist list
-    with open("artists.json", "r", encoding="utf-8") as f:
-        artists = json.load(f)
+    # Load artists from Google Sheets
+    artists = get_artists()
 
     # Look back 14 days
     cutoff_date = datetime.now() - timedelta(days=14)
@@ -61,12 +61,14 @@ def get_new_releases():
                         release_date,
                         "%Y-%m-%d"
                     )
+
                 except:
                     try:
                         released = datetime.strptime(
                             release_date,
                             "%Y-%m"
                         )
+
                     except:
                         released = datetime.strptime(
                             release_date,
