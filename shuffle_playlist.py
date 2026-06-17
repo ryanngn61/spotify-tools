@@ -48,94 +48,78 @@ def extract_playlist_id(link):
 # ======================
 # ASK FOR PLAYLIST
 # ======================
-playlist_link = input("Paste playlist link: ").strip()
+def shuffle_playlist(playlist_link):
 
-playlist_id = extract_playlist_id(playlist_link)
+    playlist_id = extract_playlist_id(playlist_link)
 
-playlist_info = sp.playlist(playlist_id)
-original_name = playlist_info["name"]
+    playlist_info = sp.playlist(playlist_id)
+    original_name = playlist_info["name"]
 
-new_name = f"{original_name} Shuffled"
+    new_name = f"{original_name} Shuffled"
 
-print(f"Original playlist: {original_name}")
-print(f"Shuffled playlist: {new_name}")
+    print(f"Original playlist: {original_name}")
+    print(f"Shuffled playlist: {new_name}")
 
-# ======================
-# FIND EXISTING SHUFFLED PLAYLIST
-# ======================
-user_id = sp.current_user()["id"]
+    user_id = sp.current_user()["id"]
 
-existing_playlist_id = None
+    existing_playlist_id = None
 
-results = sp.current_user_playlists(limit=50)
+    results = sp.current_user_playlists(limit=50)
 
-while True:
+    while True:
 
-    for playlist in results["items"]:
-        if playlist["name"] == new_name:
-            existing_playlist_id = playlist["id"]
+        for playlist in results["items"]:
+            if playlist["name"] == new_name:
+                existing_playlist_id = playlist["id"]
+                break
+
+        if existing_playlist_id:
             break
 
-    if existing_playlist_id:
-        break
+        if results["next"]:
+            results = sp.next(results)
+        else:
+            break
 
-    if results["next"]:
-        results = sp.next(results)
+    if existing_playlist_id is None:
+
+        playlist = sp.user_playlist_create(
+            user=user_id,
+            name=new_name,
+            public=False
+        )
+
+        existing_playlist_id = playlist["id"]
+
+        print("Created new shuffled playlist.")
+
     else:
-        break
+        print("Using existing shuffled playlist.")
 
-# Create playlist if it doesn't exist
-if existing_playlist_id is None:
+    tracks = get_all_tracks(playlist_id)
 
-    playlist = sp.user_playlist_create(
-        user=user_id,
-        name=new_name,
-        public=False
-    )
+    track_ids = []
 
-    existing_playlist_id = playlist["id"]
+    for item in tracks:
+        track = item["track"]
 
-    print("Created new shuffled playlist.")
+        if track and track["id"]:
+            track_ids.append(track["id"])
 
-else:
-    print("Using existing shuffled playlist.")
+    print(f"Songs found: {len(track_ids)}")
 
-# ======================
-# LOAD SONGS
-# ======================
-tracks = get_all_tracks(playlist_id)
+    random.shuffle(track_ids)
 
-track_ids = []
+    sp.playlist_replace_items(existing_playlist_id, track_ids[:100])
 
-for item in tracks:
-    track = item["track"]
+    for i in range(100, len(track_ids), 100):
+        sp.playlist_add_items(
+            existing_playlist_id,
+            track_ids[i:i + 100]
+        )
 
-    if track and track["id"]:
-        track_ids.append(track["id"])
+    print("Done!")
 
-print(f"Songs found: {len(track_ids)}")
-
-# Shuffle
-random.shuffle(track_ids)
-
-# ======================
-# CLEAR OLD PLAYLIST
-# ======================
-sp.playlist_replace_items(existing_playlist_id, [])
-
-# ======================
-# ADD SONGS
-# ======================
-sp.playlist_add_items(
-    existing_playlist_id,
-    track_ids[:100]
-)
-
-for i in range(100, len(track_ids), 100):
-    sp.playlist_add_items(
-        existing_playlist_id,
-        track_ids[i:i + 100]
-    )
-
-print("Done!")
-
+if __name__ == "__main__":
+    playlist_link = input("Paste playlist link: ").strip()
+    shuffle_playlist(playlist_link)
