@@ -1,12 +1,13 @@
 import random
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import os
 
 # ======================
 # SPOTIFY APP SETTINGS
 # ======================
-CLIENT_ID = "e0781282454f4400b5e3cd5e954541f0"
-CLIENT_SECRET = "294807a855d941569fc205fa1dcc9b41"
+CLIENT_ID = os.environ["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
 
 # MUST MATCH SPOTIFY DASHBOARD EXACTLY
 REDIRECT_URI = "https://127.0.0.1:8888/callback/"
