@@ -1,123 +1,103 @@
-import os
 import json
-import requests
 from datetime import datetime, timedelta
-from spotipy import Spotify
+
+import streamlit as st
+import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-# Spotify login
-spotify = Spotify(
+
+# ======================
+# SPOTIFY LOGIN
+# ======================
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
+spotify = spotipy.Spotify(
     auth_manager=SpotifyClientCredentials(
-        client_id=os.environ["SPOTIFY_CLIENT_ID"],
-        client_secret=os.environ["SPOTIFY_CLIENT_SECRET"]
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET
     )
 )
 
-WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
 
-# Load artists
-with open("artists.json", "r", encoding="utf-8") as f:
-    artists = json.load(f)
+def get_new_releases():
 
-# Look back 14 days
-cutoff_date = datetime.now() - timedelta(days=14)
+    # Load artist list
+    with open("artists.json", "r", encoding="utf-8") as f:
+        artists = json.load(f)
 
-new_releases = []
-seen_albums = set()
+    # Look back 14 days
+    cutoff_date = datetime.now() - timedelta(days=14)
 
-for artist in artists:
+    new_releases = []
+    seen_albums = set()
 
-    artist_name = artist["name"]
-    artist_id = artist["id"]
+    for artist in artists:
 
-    try:
-        print(f"Checking {artist_name}...")
+        artist_name = artist["name"]
+        artist_id = artist["id"]
 
-        albums = spotify.artist_albums(
-            artist_id,
-            album_type="album,single",
-            limit=50
-        )
+        try:
 
-        for album in albums["items"]:
+            albums = spotify.artist_albums(
+                artist_id,
+                album_type="album,single",
+                limit=50
+            )
 
-            # Skip duplicates
-            if album["id"] in seen_albums:
-                continue
+            for album in albums["items"]:
 
-            seen_albums.add(album["id"])
+                # Skip duplicates
+                if album["id"] in seen_albums:
+                    continue
 
-            release_date = album["release_date"]
+                seen_albums.add(album["id"])
 
-            # Handle YYYY-MM-DD, YYYY-MM, and YYYY formats
-            try:
-                released = datetime.strptime(release_date, "%Y-%m-%d")
-            except:
+                release_date = album["release_date"]
+
+                # Handle Spotify date formats
                 try:
-                    released = datetime.strptime(release_date, "%Y-%m")
+                    released = datetime.strptime(
+                        release_date,
+                        "%Y-%m-%d"
+                    )
                 except:
-                    released = datetime.strptime(release_date, "%Y")
+                    try:
+                        released = datetime.strptime(
+                            release_date,
+                            "%Y-%m"
+                        )
+                    except:
+                        released = datetime.strptime(
+                            release_date,
+                            "%Y"
+                        )
 
-            # Only include recent releases
-            if released >= cutoff_date:
+                # Only include recent releases
+                if released >= cutoff_date:
 
-                image_url = None
-                if album["images"]:
-                    image_url = album["images"][0]["url"]
+                    image_url = None
 
-                new_releases.append({
-                    "artist": artist_name,
-                    "album": album["name"],
-                    "date": release_date,
-                    "image": image_url
-                })
+                    if album["images"]:
+                        image_url = album["images"][0]["url"]
 
-    except Exception as e:
-        print(f"Skipping {artist_name}: {e}")
+                    spotify_url = album["external_urls"]["spotify"]
 
-# Sort newest first
-new_releases.sort(key=lambda x: x["date"], reverse=True)
+                    new_releases.append({
+                        "artist": artist_name,
+                        "album": album["name"],
+                        "date": release_date,
+                        "image": image_url,
+                        "url": spotify_url
+                    })
 
-if not new_releases:
+        except Exception as e:
+            print(f"Skipping {artist_name}: {e}")
 
-    requests.post(
-        WEBHOOK_URL,
-        json={
-            "content": "🎵 No new releases in the last 14 days."
-        }
+    # Sort newest first
+    new_releases.sort(
+        key=lambda x: x["date"],
+        reverse=True
     )
 
-else:
-
-    # Header message
-    requests.post(
-        WEBHOOK_URL,
-        json={
-            "content": "🎵 **Weekly Music Update**"
-        }
-    )
-
-    # One embed per release
-    for release in new_releases:
-
-        embed = {
-            "title": release["album"],
-            "description":
-                f"**Artist:** {release['artist']}\n"
-                f"**Released:** {release['date']}",
-            "color": 5763719
-        }
-
-        if release["image"]:
-            embed["image"] = {
-                "url": release["image"]
-            }
-
-        requests.post(
-            WEBHOOK_URL,
-            json={
-                "embeds": [embed]
-            }
-        )
-
-print("Done!")
+    return new_releases
