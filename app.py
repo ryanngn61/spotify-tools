@@ -22,18 +22,22 @@ if st.button("Check New Releases"):
 
         for release in releases:
 
-            st.subheader(release["album"])
-
-            st.write(f"Artist: {release['artist']}")
-            st.write(f"Released: {release['date']}")
-
-            if release["image"]:
-                st.image(release["image"], width=250)
-
-            st.link_button(
-                "Open in Spotify",
-                release["url"]
-            )
+            col1, col2 = st.columns([1, 3])
+        
+            with col1:
+                if release["image"]:
+                    st.image(release["image"], width=150)
+        
+            with col2:
+                st.subheader(release["album"])
+                st.write(f"🎤 {release['artist']}")
+                st.write(f"📅 Released: {release['date']}")
+                st.link_button(
+                    "Open in Spotify",
+                    release["url"]
+                )
+        
+            st.divider()
 # ==========================
 # ENGLISH PLAYLIST BUTTON
 # ==========================
