@@ -6,7 +6,8 @@ from google.oauth2.service_account import Credentials
 def test_connection():
 
     scope = [
-        "https://www.googleapis.com/auth/spreadsheets"
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
     ]
 
     creds = Credentials.from_service_account_info(
