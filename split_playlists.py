@@ -61,84 +61,90 @@ def get_all_tracks(playlist_id):
     return tracks
 
 
-print("Loading playlists...")
+def update_english_playlist():
 
-all_music = get_all_tracks(ALL_PLAYLIST_ID)
-kpop_music = get_all_tracks(KPOP_PLAYLIST_ID)
+    print("Loading playlists...")
 
-print(f"All Music songs: {len(all_music)}")
-print(f"K-pop songs: {len(kpop_music)}")
+    all_music = get_all_tracks(ALL_PLAYLIST_ID)
+    kpop_music = get_all_tracks(KPOP_PLAYLIST_ID)
 
-# ======================
-# BUILD KPOP SONG SET
-# ======================
-kpop_track_ids = set()
+    print(f"All Music songs: {len(all_music)}")
+    print(f"K-pop songs: {len(kpop_music)}")
 
-for item in kpop_music:
-    track = item["track"]
+    # ======================
+    # BUILD KPOP SONG SET
+    # ======================
+    kpop_track_ids = set()
 
-    if track and track["id"]:
-        kpop_track_ids.add(track["id"])
+    for item in kpop_music:
+        track = item["track"]
 
-# ======================
-# BUILD ENGLISH PLAYLIST
-# ======================
-english_track_ids = []
-seen = set()
+        if track and track["id"]:
+            kpop_track_ids.add(track["id"])
 
-print("Building English playlist...")
+    # ======================
+    # BUILD ENGLISH PLAYLIST
+    # ======================
+    english_track_ids = []
+    seen = set()
 
-for item in all_music:
+    print("Building English playlist...")
 
-    track = item["track"]
+    for item in all_music:
 
-    if not track or not track["id"]:
-        continue
+        track = item["track"]
 
-    track_id = track["id"]
+        if not track or not track["id"]:
+            continue
 
-    if track_id in seen:
-        continue
+        track_id = track["id"]
 
-    keep_song = False
+        if track_id in seen:
+            continue
 
-    # Keep if ANY artist is in keep list
-    for artist in track["artists"]:
-        if artist["id"] in KEEP_ARTIST_IDS:
-            keep_song = True
-            break
+        keep_song = False
 
-    # Remove K-pop songs unless exception artist
-    if track_id in kpop_track_ids and not keep_song:
-        continue
+        # Keep if ANY artist is in keep list
+        for artist in track["artists"]:
+            if artist["id"] in KEEP_ARTIST_IDS:
+                keep_song = True
+                break
 
-    english_track_ids.append(track_id)
-    seen.add(track_id)
+        # Remove K-pop songs unless exception artist
+        if track_id in kpop_track_ids and not keep_song:
+            continue
 
-print(f"English playlist size: {len(english_track_ids)}")
+        english_track_ids.append(track_id)
+        seen.add(track_id)
 
-# ======================
-# SHUFFLE PLAYLIST
-# ======================
-print("Shuffling playlist...")
-random.shuffle(english_track_ids)
+    print(f"English playlist size: {len(english_track_ids)}")
 
-# ======================
-# UPDATE PLAYLIST
-# ======================
-print("Updating playlist...")
+    # ======================
+    # SHUFFLE PLAYLIST
+    # ======================
+    print("Shuffling playlist...")
+    random.shuffle(english_track_ids)
 
-# Replace first 100 songs
-sp.playlist_replace_items(
-    ENGLISH_PLAYLIST_ID,
-    english_track_ids[:100]
-)
+    # ======================
+    # UPDATE PLAYLIST
+    # ======================
+    print("Updating playlist...")
 
-# Add remaining songs in batches of 100
-for i in range(100, len(english_track_ids), 100):
-    sp.playlist_add_items(
+    # Replace first 100 songs
+    sp.playlist_replace_items(
         ENGLISH_PLAYLIST_ID,
-        english_track_ids[i:i + 100]
+        english_track_ids[:100]
     )
 
-print("Done!")
+    # Add remaining songs in batches of 100
+    for i in range(100, len(english_track_ids), 100):
+        sp.playlist_add_items(
+            ENGLISH_PLAYLIST_ID,
+            english_track_ids[i:i + 100]
+        )
+
+    print("Done!")
+
+
+if __name__ == "__main__":
+    update_english_playlist()
