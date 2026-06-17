@@ -1,10 +1,39 @@
 import streamlit as st
 
+from new_releases import get_new_releases
 from shuffle_playlist import shuffle_playlist
 from split_playlists import update_english_playlist
 
 st.title("Ryan's Spotify Tools")
 
+st.divider()
+
+st.header("🎵 New Releases")
+
+if st.button("Check New Releases"):
+
+    releases = get_new_releases()
+
+    if not releases:
+
+        st.info("No new releases in the last 14 days.")
+
+    else:
+
+        for release in releases:
+
+            st.subheader(release["album"])
+
+            st.write(f"Artist: {release['artist']}")
+            st.write(f"Released: {release['date']}")
+
+            if release["image"]:
+                st.image(release["image"], width=250)
+
+            st.link_button(
+                "Open in Spotify",
+                release["url"]
+            )
 # ==========================
 # ENGLISH PLAYLIST BUTTON
 # ==========================
