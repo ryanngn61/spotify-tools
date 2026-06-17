@@ -1,13 +1,10 @@
 import random
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-import os
+import streamlit as st
 
-# ======================
-# SPOTIFY APP SETTINGS
-# ======================
-CLIENT_ID = os.environ["SPOTIFY_CLIENT_ID"]
-CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 REDIRECT_URI = "https://127.0.0.1:8888/callback/"
 
 sp = spotipy.Spotify(
