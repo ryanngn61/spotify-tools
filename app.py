@@ -1,4 +1,6 @@
 import streamlit as st
+import test_sheets
+
 
 from new_releases import get_new_releases
 from shuffle_playlist import shuffle_playlist
