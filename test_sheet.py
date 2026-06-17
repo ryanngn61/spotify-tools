@@ -2,22 +2,26 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-scope = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=scope
-)
+def test_connection():
 
-client = gspread.authorize(creds)
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets"
+    ]
 
-sheet = client.open("Spotify Artists Watchlist").sheet1
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scope
+    )
 
-records = sheet.get_all_records()
+    client = gspread.authorize(creds)
 
-st.write("Connection successful!")
-st.write(records[:5])
+    sheet = client.open("Spotify Artists Watchlist")
 
+    st.success("✅ Connected successfully!")
+
+    worksheet = sheet.sheet1
+
+    rows = worksheet.get_all_values()
+
+    st.write(rows[:5])
