@@ -28,14 +28,20 @@ KEEP_ARTIST_IDS = {
 # ======================
 # LOGIN
 # ======================
-sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(
-        client_id=CLIENT_ID,
-        client_secret=CLIENT_SECRET,
-        redirect_uri=REDIRECT_URI,
-        scope="playlist-read-private playlist-modify-private playlist-modify-public"
-    )
+from spotipy.oauth2 import SpotifyOAuth
+
+auth_manager = SpotifyOAuth(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    redirect_uri=REDIRECT_URI,
+    scope="playlist-read-private playlist-modify-private playlist-modify-public"
 )
+
+token_info = auth_manager.refresh_access_token(
+    st.secrets["SPOTIFY_REFRESH_TOKEN"]
+)
+
+sp = spotipy.Spotify(auth=token_info["access_token"])
 
 
 def get_all_tracks(playlist_id):
