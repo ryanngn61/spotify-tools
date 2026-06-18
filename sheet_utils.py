@@ -45,17 +45,22 @@ def add_artist(name, artist_id):
 
     return True
 
-def add_artist(name, artist_id):
+def remove_artist(artist_id):
 
     worksheet = get_sheet()
 
-    artists = get_artists()
+    rows = worksheet.get_all_values()
 
-    # Prevent duplicates
-    for artist in artists:
-        if artist["id"] == artist_id:
-            return False
+    for i, row in enumerate(rows):
 
-    worksheet.append_row([name, artist_id])
+        # Skip header row
+        if i == 0:
+            continue
 
-    return True
+        if len(row) >= 2 and row[1] == artist_id:
+
+            worksheet.delete_rows(i + 1)
+
+            return True
+
+    return False
