@@ -6,6 +6,16 @@ from split_playlists import update_english_playlist
 
 from sheet_utils import get_artists
 
+from spotify_utils import get_artist_from_link
+
+link = st.text_input("Artist Link")
+
+if st.button("Test Artist Link"):
+
+    artist = get_artist_from_link(link)
+
+    st.write(artist)
+
 if st.button("Show Artists"):
     st.write(get_artists())
 
