@@ -197,45 +197,51 @@ with st.expander("🎵 Check New Releases"):
                 st.divider()
 
 
+```python id="g9z5mx"
 # ===================================================
 # SHUFFLE PLAYLIST
 # ===================================================
-with st.expander("🔀 Shuffle Playlist"):
+st.divider()
 
-    playlist_link = st.text_input(
-        "Spotify Playlist Link"
-    )
+st.header("🔀 Shuffle Playlist")
 
-    if st.button("Shuffle Playlist"):
+playlist_link = st.text_input(
+    "Spotify Playlist Link"
+)
 
-        if playlist_link:
+if st.button("Shuffle Playlist"):
 
-            shuffle_playlist(
-                playlist_link
-            )
+    if playlist_link:
 
-            st.success(
-                "Playlist shuffled!"
-            )
+        shuffle_playlist(
+            playlist_link
+        )
 
-        else:
+        st.success(
+            "Playlist shuffled!"
+        )
 
-            st.warning(
-                "Paste a playlist link."
-            )
+    else:
+
+        st.warning(
+            "Paste a playlist link."
+        )
 
 
 # ===================================================
 # PLAYLIST TOOLS
 # ===================================================
-with st.expander("📂 Playlist Tools"):
+st.divider()
 
-    if st.button(
-        "Update English Playlist"
-    ):
+st.header("📂 Playlist Tools")
 
-        update_english_playlist()
+if st.button(
+    "Update English Playlist"
+):
 
-        st.success(
-            "English playlist updated!"
-        )
+    update_english_playlist()
+
+    st.success(
+        "English playlist updated!"
+    )
+```
