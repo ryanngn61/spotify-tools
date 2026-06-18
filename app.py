@@ -117,10 +117,25 @@ with st.expander(
                     with image_col2:
 
                         if info["image"]:
-
-                            st.image(
-                                info["image"],
-                                width=150
+                        
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    display:flex;
+                                    justify-content:center;
+                                ">
+                                    <img
+                                        src="{info['image']}"
+                                        style="
+                                            width:150px;
+                                            height:150px;
+                                            object-fit:cover;
+                                            border-radius:10px;
+                                        "
+                                    >
+                                </div>
+                                """,
+                                unsafe_allow_html=True
                             )
 
                     st.write("")
