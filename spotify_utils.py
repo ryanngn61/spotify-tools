@@ -22,6 +22,7 @@ def extract_artist_id(link):
     return link.rstrip("/").split("/")[-1]
 
 
+
 def get_artist_info(artist_id):
 
     artist = spotify.artist(artist_id)
@@ -29,13 +30,16 @@ def get_artist_info(artist_id):
     image = None
 
     if artist["images"]:
-        image = artist["images"][0]["url"]
+        # Use smallest Spotify image
+        image = artist["images"][-1]["url"]
 
     return {
         "name": artist["name"],
         "id": artist["id"],
         "image": image
     }
+
+
 
 
 def get_artist_from_link(link):
