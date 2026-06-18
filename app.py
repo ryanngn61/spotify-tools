@@ -197,7 +197,7 @@ with st.expander("🎵 Check New Releases"):
                 st.divider()
 
 
-```python id="g9z5mx"
+
 # ===================================================
 # SHUFFLE PLAYLIST
 # ===================================================
@@ -244,4 +244,3 @@ if st.button(
     st.success(
         "English playlist updated!"
     )
-```
