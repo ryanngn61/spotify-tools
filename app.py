@@ -192,7 +192,7 @@ if "release_end_date" not in st.session_state:
 
 
 # ---------- CONTROLS ----------
-col1, col2, col3 = st.columns([1, 3, 0.8])
+col1, col2, col3 = st.columns([1, 4, 0.8])
 
 with col1:
 
