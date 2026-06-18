@@ -111,20 +111,28 @@ with st.expander(
 
                 with st.container(border=True):
 
-                    if info["image"]:
+                    # ---------- IMAGE ----------
+                    image_col1, image_col2, image_col3 = st.columns([1, 2, 1])
 
-                        st.image(
-                            info["image"],
-                            width=120
-                        )
+                    with image_col2:
 
+                        if info["image"]:
+
+                            st.image(
+                                info["image"],
+                                width=150
+                            )
+
+                    st.write("")
+
+                    # ---------- NAME ----------
                     st.markdown(
                         f"""
-                        <div style='
+                        <div style="
                             text-align:center;
-                            font-size:22px;
+                            font-size:30px;
                             font-weight:bold;
-                        '>
+                        ">
                             {info["name"]}
                         </div>
                         """,
@@ -132,18 +140,25 @@ with st.expander(
                     )
 
                     st.write("")
+                    st.write("")
 
-                    if st.button(
-                        "❌ Remove",
-                        key=f"delete_{artist['id']}"
-                    ):
+                    # ---------- REMOVE BUTTON ----------
+                    button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
 
-                        remove_artist(
-                            artist["id"]
-                        )
+                    with button_col2:
 
-                        st.rerun()
+                        if st.button(
+                            "❌ Remove",
+                            key=f"delete_{artist['id']}"
+                        ):
 
+                            remove_artist(
+                                artist["id"]
+                            )
+
+                            st.rerun()
+
+        st.write("")
 
 # ===================================================
 # NEW RELEASES
