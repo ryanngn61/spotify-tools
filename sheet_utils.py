@@ -30,7 +30,7 @@ def get_artists():
 
     return rows
 
-def add_artist(name, artist_id):
+def add_artist(name, artist_id,image):
 
     worksheet = get_sheet()
 
@@ -41,7 +41,7 @@ def add_artist(name, artist_id):
         if artist["id"] == artist_id:
             return False
 
-    worksheet.append_row([name, artist_id])
+    worksheet.append_row([name, artist_id,image])
 
     return True
 
