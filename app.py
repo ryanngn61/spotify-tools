@@ -33,8 +33,15 @@ with st.expander("🎵 Artist Release Tracker", expanded=True):
     st.caption(f"Tracking {len(artists)} artists")
 
     for artist in artists:
-
-        info = get_artist_info(artist["id"])
+    
+        try:
+            info = get_artist_info(artist["id"])
+    
+        except Exception:
+            st.warning(
+                f"Couldn't load artist: {artist['name']} ({artist['id']})"
+            )
+            continue
 
         col1, col2, col3 = st.columns([1, 4, 1])
 
