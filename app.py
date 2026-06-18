@@ -230,7 +230,7 @@ with st.expander(
 
                     st.image(
                         release["image"],
-                        width:300xpx;
+                        width:300px;
                         height:300px;
                     )
 
