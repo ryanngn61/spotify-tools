@@ -7,6 +7,34 @@ from split_playlists import update_english_playlist
 from sheet_utils import get_artists
 
 from spotify_utils import get_artist_from_link
+from sheet_utils import add_artist
+
+st.subheader("Add Artist")
+
+link = st.text_input("Spotify Artist Link")
+
+if st.button("Add Artist"):
+
+    try:
+
+        artist = get_artist_from_link(link)
+
+        success = add_artist(
+            artist["name"],
+            artist["id"]
+        )
+
+        if success:
+            st.success(f"Added {artist['name']}")
+
+        else:
+            st.warning("Artist already exists")
+
+    except Exception as e:
+        st.error(e)
+
+
+from spotify_utils import get_artist_from_link
 
 link = st.text_input("Artist Link")
 
