@@ -1,3 +1,4 @@
+```python
 from datetime import datetime, timedelta
 
 import streamlit as st
@@ -21,18 +22,33 @@ spotify = spotipy.Spotify(
 )
 
 
-def get_new_releases():
+def get_new_releases(
+    days=7,
+    start_date=None
+):
 
     # Load artists from Google Sheets
     artists = get_artists()
 
-    # Look back 14 days
-    cutoff_date = datetime.now() - timedelta(days=14)
+    # Determine date range
+    if start_date:
+
+        cutoff_date = start_date
+        end_date = start_date + timedelta(days=days)
+
+    else:
+
+        cutoff_date = datetime.now() - timedelta(days=days)
+        end_date = datetime.now()
 
     new_releases = []
     seen_albums = set()
 
     for artist in artists:
+
+        # Skip bad rows
+        if "name" not in artist or "id" not in artist:
+            continue
 
         artist_name = artist["name"]
         artist_id = artist["id"]
@@ -57,26 +73,30 @@ def get_new_releases():
 
                 # Handle Spotify date formats
                 try:
+
                     released = datetime.strptime(
                         release_date,
                         "%Y-%m-%d"
                     )
 
                 except:
+
                     try:
+
                         released = datetime.strptime(
                             release_date,
                             "%Y-%m"
                         )
 
                     except:
+
                         released = datetime.strptime(
                             release_date,
                             "%Y"
                         )
 
-                # Only include recent releases
-                if released >= cutoff_date:
+                # Only include releases in range
+                if cutoff_date <= released <= end_date:
 
                     image_url = None
 
@@ -86,20 +106,26 @@ def get_new_releases():
                     spotify_url = album["external_urls"]["spotify"]
 
                     new_releases.append({
+
                         "artist": artist_name,
                         "album": album["name"],
                         "date": release_date,
                         "image": image_url,
                         "url": spotify_url
+
                     })
 
         except Exception as e:
-            print(f"Skipping {artist_name}: {e}")
 
-    # Sort newest first
+            print(
+                f"Skipping {artist_name}: {e}"
+            )
+
+    # Newest first
     new_releases.sort(
         key=lambda x: x["date"],
         reverse=True
     )
 
     return new_releases
+```
