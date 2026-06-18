@@ -179,7 +179,19 @@ with st.expander(
 # NEW RELEASES
 # ===================================================
 
-# ---------- FILTERS ----------
+# ---------- DEFAULT VALUES ----------
+default_days = 7
+default_date = datetime.today()
+
+# ---------- SESSION STATE ----------
+if "release_days" not in st.session_state:
+    st.session_state.release_days = default_days
+
+if "release_end_date" not in st.session_state:
+    st.session_state.release_end_date = default_date
+
+
+# ---------- CONTROLS ----------
 col1, col2, col3 = st.columns([1, 2, 0.8])
 
 with col1:
@@ -187,15 +199,15 @@ with col1:
     days_input = st.number_input(
         "Days",
         min_value=1,
-        value=7,
+        value=st.session_state.release_days,
         label_visibility="collapsed"
     )
 
 with col2:
 
-    start_date_input = st.date_input(
-        "Start Date",
-        value=datetime.today(),
+    end_date_input = st.date_input(
+        "End Date",
+        value=st.session_state.release_end_date,
         label_visibility="collapsed"
     )
 
@@ -206,27 +218,26 @@ with col3:
     )
 
 
-# ---------- SESSION STATE ----------
-if "release_days" not in st.session_state:
-    st.session_state.release_days = 7
-
-if "release_start_date" not in st.session_state:
-    st.session_state.release_start_date = datetime.today()
-
-
-# ---------- UPDATE ONLY WHEN BUTTON IS PRESSED ----------
+# ---------- UPDATE ONLY WHEN BUTTON PRESSED ----------
 if refresh_pressed:
 
     st.session_state.release_days = days_input
-    st.session_state.release_start_date = start_date_input
+    st.session_state.release_end_date = end_date_input
 
 
-# ---------- LOAD RELEASES ----------
-start_datetime = datetime.combine(
-    st.session_state.release_start_date,
+# ---------- CALCULATE RANGE ----------
+end_datetime = datetime.combine(
+    st.session_state.release_end_date,
     datetime.min.time()
 )
 
+start_datetime = (
+    end_datetime -
+    timedelta(days=st.session_state.release_days)
+)
+
+
+# ---------- LOAD RELEASES ----------
 releases = get_new_releases(
     days=st.session_state.release_days,
     start_date=start_datetime
@@ -235,7 +246,7 @@ releases = get_new_releases(
 badge_count = len(releases)
 
 
-# ---------- RELEASE SECTION ----------
+# ---------- RELEASE DISPLAY ----------
 with st.expander(
     f"🎵 New Releases 🔴 {badge_count}"
 ):
