@@ -29,7 +29,7 @@ st.header("🎵 Artist Release Tracker")
 # -------------------
 st.subheader("Add Artist")
 
-col1, col2 = st.columns([12, 1])
+col1, col2 = st.columns([10, 1])
 
 with col1:
     artist_link = st.text_input(
