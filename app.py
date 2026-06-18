@@ -222,7 +222,7 @@ with st.expander(
 
         for release in releases:
 
-            col1, col2 = st.columns([1, 3])
+            col1, col2 = st.columns([2, 2])
 
             with col1:
 
@@ -230,7 +230,7 @@ with st.expander(
 
                     st.image(
                         release["image"],
-                        width = 500
+                        width = 250
                     )
 
             with col2:
