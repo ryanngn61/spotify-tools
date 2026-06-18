@@ -1,4 +1,3 @@
-```python
 from datetime import datetime, timedelta
 
 import streamlit as st
@@ -128,4 +127,3 @@ def get_new_releases(
     )
 
     return new_releases
-```
