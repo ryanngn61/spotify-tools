@@ -1,122 +1,191 @@
 import streamlit as st
-
 from new_releases import get_new_releases
 from shuffle_playlist import shuffle_playlist
 from split_playlists import update_english_playlist
 
-from sheet_utils import get_artists
+from sheet_utils import (
+    get_artists,
+    add_artist,
+    remove_artist
+)
 
-from spotify_utils import get_artist_from_link
-from sheet_utils import add_artist
+from spotify_utils import (
+    get_artist_from_link,
+    get_artist_info
+)
 
-st.subheader("Add Artist")
 
-link = st.text_input("Spotify Artist Link")
+st.title("🎵 Ryan's Spotify Tools")
 
-if st.button("Add Artist"):
 
-    try:
+# ===================================================
+# ARTIST RELEASE TRACKER
+# ===================================================
+with st.expander("🎵 Artist Release Tracker", expanded=True):
 
-        artist = get_artist_from_link(link)
+    # -------------------
+    # WATCHLIST
+    # -------------------
+    st.subheader("Release Watchlist")
 
-        success = add_artist(
-            artist["name"],
-            artist["id"]
-        )
+    artists = get_artists()
 
-        if success:
-            st.success(f"Added {artist['name']}")
+    st.caption(f"Tracking {len(artists)} artists")
+
+    for artist in artists:
+
+        info = get_artist_info(artist["id"])
+
+        col1, col2, col3 = st.columns([1, 4, 1])
+
+        with col1:
+            if info["image"]:
+                st.image(info["image"], width=70)
+
+        with col2:
+            st.write(f"**{info['name']}**")
+
+        with col3:
+
+            if st.button(
+                "❌",
+                key=f"delete_{artist['id']}"
+            ):
+
+                remove_artist(artist["id"])
+                st.rerun()
+
+        st.divider()
+
+    # -------------------
+    # ADD ARTIST
+    # -------------------
+    st.subheader("➕ Add Artist")
+
+    artist_link = st.text_input(
+        "Spotify Artist Link"
+    )
+
+    if st.button("Add Artist"):
+
+        try:
+
+            artist = get_artist_from_link(
+                artist_link
+            )
+
+            success = add_artist(
+                artist["name"],
+                artist["id"]
+            )
+
+            if success:
+                st.success(
+                    f"Added {artist['name']}"
+                )
+                st.rerun()
+
+            else:
+                st.warning(
+                    "Artist already exists"
+                )
+
+        except Exception as e:
+            st.error(e)
+
+    st.divider()
+
+    # -------------------
+    # NEW RELEASES
+    # -------------------
+    st.subheader("🎵 New Releases")
+
+    if st.button("Check New Releases"):
+
+        releases = get_new_releases()
+
+        if not releases:
+
+            st.info(
+                "No new releases in the last 14 days."
+            )
 
         else:
-            st.warning("Artist already exists")
 
-    except Exception as e:
-        st.error(e)
+            for release in releases:
+
+                col1, col2 = st.columns([1, 3])
+
+                with col1:
+
+                    if release["image"]:
+                        st.image(
+                            release["image"],
+                            width=150
+                        )
+
+                with col2:
+
+                    st.subheader(
+                        release["album"]
+                    )
+
+                    st.write(
+                        f"🎤 {release['artist']}"
+                    )
+
+                    st.write(
+                        f"📅 {release['date']}"
+                    )
+
+                    st.link_button(
+                        "Open in Spotify",
+                        release["url"]
+                    )
+
+                st.divider()
 
 
-from spotify_utils import get_artist_from_link
+# ===================================================
+# SHUFFLE PLAYLIST
+# ===================================================
+with st.expander("🔀 Shuffle Playlist"):
 
-link = st.text_input("Artist Link")
+    playlist_link = st.text_input(
+        "Spotify Playlist Link"
+    )
 
-if st.button("Test Artist Link"):
+    if st.button("Shuffle Playlist"):
 
-    artist = get_artist_from_link(link)
+        if playlist_link:
 
-    st.write(artist)
+            shuffle_playlist(
+                playlist_link
+            )
 
-if st.button("Show Artists"):
-    st.write(get_artists())
+            st.success(
+                "Playlist shuffled!"
+            )
 
-st.title("Ryan's Spotify Tools")
+        else:
 
-st.divider()
+            st.warning(
+                "Paste a playlist link."
+            )
 
-st.header("🎵 New Releases")
 
-if st.button("Check New Releases"):
+# ===================================================
+# PLAYLIST TOOLS
+# ===================================================
+with st.expander("📂 Playlist Tools"):
 
-    releases = get_new_releases()
+    if st.button(
+        "Update English Playlist"
+    ):
 
-    if not releases:
+        update_english_playlist()
 
-        st.info("No new releases in the last 14 days.")
-
-    else:
-
-        for release in releases:
-
-            col1, col2 = st.columns([1, 3])
-        
-            with col1:
-                if release["image"]:
-                    st.image(release["image"], width=150)
-        
-            with col2:
-                st.subheader(release["album"])
-                st.write(f"🎤 {release['artist']}")
-                st.write(f"📅 Released: {release['date']}")
-                st.link_button(
-                    "Open in Spotify",
-                    release["url"]
-                )
-        
-            st.divider()
-# ==========================
-# ENGLISH PLAYLIST BUTTON
-# ==========================
-st.header("Update English Playlist")
-
-if st.button("Update English Playlist"):
-
-    st.write("Button clicked")
-    st.write("About to update playlist...")
-
-    update_english_playlist()
-
-    st.write("Returned from update_english_playlist()")
-    st.success("English playlist updated!")
-
-st.divider()
-
-# ==========================
-# SHUFFLE PLAYLIST BUTTON
-# ==========================
-st.header("Shuffle Playlist")
-
-playlist_link = st.text_input("Paste Spotify playlist link")
-
-if st.button("Shuffle Playlist"):
-
-    st.write("Button clicked")
-
-    if playlist_link:
-
-        st.write("About to call shuffle_playlist()")
-
-        shuffle_playlist(playlist_link)
-
-        st.write("Returned from shuffle_playlist()")
-        st.success("Playlist shuffled!")
-
-    else:
-        st.warning("Please paste a playlist link.")
+        st.success(
+            "English playlist updated!"
+        )
+```
