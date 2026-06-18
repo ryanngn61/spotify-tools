@@ -4,6 +4,11 @@ from new_releases import get_new_releases
 from shuffle_playlist import shuffle_playlist
 from split_playlists import update_english_playlist
 
+from sheet_utils import get_artists
+
+if st.button("Show Artists"):
+    st.write(get_artists())
+
 st.title("Ryan's Spotify Tools")
 
 st.divider()
