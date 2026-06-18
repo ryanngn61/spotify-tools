@@ -127,8 +127,8 @@ with st.expander(
                                     <img
                                         src="{info['image']}"
                                         style="
-                                            width:150px;
-                                            height:150px;
+                                            width:220px;
+                                            height:220px;
                                             object-fit:cover;
                                             border-radius:10px;
                                         "
@@ -179,49 +179,44 @@ with st.expander(
 # NEW RELEASES
 # ===================================================
 
-# Default releases (last 7 days)
-default_releases = get_new_releases()
+days = st.number_input(
+    "Look back (days)",
+    min_value=1,
+    value=7,
+    key="release_days"
+)
+
+start_datetime = None
+
+use_custom_date = st.checkbox(
+    "Use custom start date"
+)
+
+if use_custom_date:
+
+    chosen_date = st.date_input(
+        "Start date"
+    )
+
+    start_datetime = datetime.combine(
+        chosen_date,
+        datetime.min.time()
+    )
+
+releases = get_new_releases(
+    days=days,
+    start_date=start_datetime
+)
+
+badge_count = len(releases)
 
 with st.expander(
-    f"🎵 New Releases ({len(default_releases)})"
+    f"🎵 New Releases 🔴 {badge_count}"
 ):
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        days = st.number_input(
-            "Look back (days)",
-            min_value=1,
-            value=7
-        )
-
-    with col2:
-
-        start_date = st.date_input(
-            "Start date (optional)",
-            value=None
-        )
-
-    # Convert date_input result to datetime
-    start_datetime = None
-
-    if start_date:
-        start_datetime = datetime.combine(
-            start_date,
-            datetime.min.time()
-        )
-
-    releases = get_new_releases(
-        days=days,
-        start_date=start_datetime
-    )
 
     if not releases:
 
-        st.info(
-            "No releases found."
-        )
+        st.info("No releases found.")
 
     else:
 
@@ -235,7 +230,7 @@ with st.expander(
 
                     st.image(
                         release["image"],
-                        width=150
+                        width=220
                     )
 
             with col2:
@@ -258,7 +253,6 @@ with st.expander(
                 )
 
             st.divider()
-
 
 # ===================================================
 # SHUFFLE PLAYLIST
