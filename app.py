@@ -21,36 +21,93 @@ st.title("🎵 Ryan's Spotify Tools")
 # ===================================================
 # ARTIST RELEASE TRACKER
 # ===================================================
-with st.expander("🎵 Artist Release Tracker", expanded=True):
+st.header("🎵 Artist Release Tracker")
 
-    # -------------------
-    # WATCHLIST
-    # -------------------
-    st.subheader("Release Watchlist")
 
-    artists = get_artists()
+# -------------------
+# ADD ARTIST
+# -------------------
+st.subheader("➕ Add Artist")
 
-    st.caption(f"Tracking {len(artists)} artists")
+artist_link = st.text_input(
+    "Spotify Artist Link"
+)
+
+if st.button("Add Artist"):
+
+    try:
+
+        artist = get_artist_from_link(
+            artist_link
+        )
+
+        success = add_artist(
+            artist["name"],
+            artist["id"]
+        )
+
+        if success:
+
+            st.success(
+                f"Added {artist['name']}"
+            )
+
+            st.rerun()
+
+        else:
+
+            st.warning(
+                "Artist already exists"
+            )
+
+    except Exception as e:
+
+        st.error(e)
+
+
+# ===================================================
+# WATCHLIST
+# ===================================================
+artists = get_artists()
+
+with st.expander(
+    f"🎧 Release Watchlist ({len(artists)} artists)"
+):
 
     for artist in artists:
-    
+
         try:
-            info = get_artist_info(artist["id"])
-    
-        except Exception:
-            st.warning(
-                f"Couldn't load artist: {artist['name']} ({artist['id']})"
+
+            info = get_artist_info(
+                artist["id"]
             )
+
+        except:
+
+            st.warning(
+                f"Couldn't load {artist['name']}"
+            )
+
             continue
 
-        col1, col2, col3 = st.columns([1, 4, 1])
+        col1, col2, col3 = st.columns(
+            [1, 4, 1]
+        )
 
         with col1:
+
             if info["image"]:
-                st.image(info["image"], width=70)
+
+                st.image(
+                    info["image"],
+                    width=70
+                )
 
         with col2:
-            st.write(f"**{info['name']}**")
+
+            st.write(
+                f"**{info['name']}**"
+            )
 
         with col3:
 
@@ -59,53 +116,19 @@ with st.expander("🎵 Artist Release Tracker", expanded=True):
                 key=f"delete_{artist['id']}"
             ):
 
-                remove_artist(artist["id"])
+                remove_artist(
+                    artist["id"]
+                )
+
                 st.rerun()
 
         st.divider()
 
-    # -------------------
-    # ADD ARTIST
-    # -------------------
-    st.subheader("➕ Add Artist")
 
-    artist_link = st.text_input(
-        "Spotify Artist Link"
-    )
-
-    if st.button("Add Artist"):
-
-        try:
-
-            artist = get_artist_from_link(
-                artist_link
-            )
-
-            success = add_artist(
-                artist["name"],
-                artist["id"]
-            )
-
-            if success:
-                st.success(
-                    f"Added {artist['name']}"
-                )
-                st.rerun()
-
-            else:
-                st.warning(
-                    "Artist already exists"
-                )
-
-        except Exception as e:
-            st.error(e)
-
-    st.divider()
-
-    # -------------------
-    # NEW RELEASES
-    # -------------------
-    st.subheader("🎵 New Releases")
+# ===================================================
+# NEW RELEASES
+# ===================================================
+with st.expander("🎵 Check New Releases"):
 
     if st.button("Check New Releases"):
 
@@ -114,18 +137,21 @@ with st.expander("🎵 Artist Release Tracker", expanded=True):
         if not releases:
 
             st.info(
-                "No new releases in the last 14 days."
+                "No new releases found."
             )
 
         else:
 
             for release in releases:
 
-                col1, col2 = st.columns([1, 3])
+                col1, col2 = st.columns(
+                    [1, 3]
+                )
 
                 with col1:
 
                     if release["image"]:
+
                         st.image(
                             release["image"],
                             width=150
