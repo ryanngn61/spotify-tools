@@ -29,3 +29,33 @@ def get_artists():
     rows = worksheet.get_all_records()
 
     return rows
+
+def add_artist(name, artist_id):
+
+    worksheet = get_sheet()
+
+    artists = get_artists()
+
+    # Prevent duplicates
+    for artist in artists:
+        if artist["id"] == artist_id:
+            return False
+
+    worksheet.append_row([name, artist_id])
+
+    return True
+
+def add_artist(name, artist_id):
+
+    worksheet = get_sheet()
+
+    artists = get_artists()
+
+    # Prevent duplicates
+    for artist in artists:
+        if artist["id"] == artist_id:
+            return False
+
+    worksheet.append_row([name, artist_id])
+
+    return True
