@@ -175,50 +175,67 @@ with st.expander(
 
         st.write("")
 
-
 # ===================================================
 # NEW RELEASES
 # ===================================================
 
-col1, col2 = st.columns([4, 1])
+# ---------- FILTERS ----------
+col1, col2, col3 = st.columns([1, 2, 0.8])
 
 with col1:
 
-    days = st.number_input(
-        "Look back (days)",
+    days_input = st.number_input(
+        "Days",
         min_value=1,
         value=7,
-        key="release_days"
+        label_visibility="collapsed"
     )
 
 with col2:
 
-    use_custom_date = st.toggle(
-        "Custom Date"
+    start_date_input = st.date_input(
+        "Start Date",
+        value=datetime.today(),
+        label_visibility="collapsed"
     )
 
-start_datetime = None
+with col3:
 
-if use_custom_date:
-
-    chosen_date = st.date_input(
-        "Start date"
+    refresh_pressed = st.button(
+        "Refresh"
     )
 
-    start_datetime = datetime.combine(
-        chosen_date,
-        datetime.min.time()
-    )
 
+# ---------- SESSION STATE ----------
+if "release_days" not in st.session_state:
+    st.session_state.release_days = 7
+
+if "release_start_date" not in st.session_state:
+    st.session_state.release_start_date = datetime.today()
+
+
+# ---------- UPDATE ONLY WHEN BUTTON IS PRESSED ----------
+if refresh_pressed:
+
+    st.session_state.release_days = days_input
+    st.session_state.release_start_date = start_date_input
+
+
+# ---------- LOAD RELEASES ----------
+start_datetime = datetime.combine(
+    st.session_state.release_start_date,
+    datetime.min.time()
+)
 
 releases = get_new_releases(
-    days=days,
+    days=st.session_state.release_days,
     start_date=start_datetime
 )
 
 badge_count = len(releases)
 
 
+# ---------- RELEASE SECTION ----------
 with st.expander(
     f"🎵 New Releases 🔴 {badge_count}"
 ):
