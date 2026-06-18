@@ -51,7 +51,8 @@ if add_pressed:
 
         success = add_artist(
             artist["name"],
-            artist["id"]
+            artist["id"],
+            artist["image"]
         )
 
         if success:
@@ -95,75 +96,34 @@ with st.expander(
 
             with row_cols[j]:
 
-                try:
+                col1, col2, col3 = st.columns(
+                    [1.2, 3, 0.8]
+                )
 
-                    info = get_artist_info(
-                        artist["id"]
-                    )
+                # ---------- IMAGE ----------
+                with col1:
 
-                except:
+                    if artist["image"]:
 
-                    st.warning(
-                        f"Couldn't load {artist['name']}"
-                    )
+                        st.image(
+                            artist["image"],
+                            width=100
+                        )
 
-                    continue
+                # ---------- NAME ----------
+                with col2:
 
-                with st.container(border=True):
-
-                    # ---------- IMAGE ----------
-                    image_col1, image_col2, image_col3 = st.columns([1, 2, 1])
-
-                    with image_col2:
-
-                        if info["image"]:
-                        
-                            st.markdown(
-                                f"""
-                                <div style="
-                                    display:flex;
-                                    justify-content:center;
-                                ">
-                                    <img
-                                        src="{info['image']}"
-                                        style="
-                                            width:150x;
-                                            height:150px;
-                                            object-fit:cover;
-                                            border-radius:10px;
-                                        "
-                                    >
-                                </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
-
-                    st.write("")
-
-                    # ---------- NAME ----------
                     st.markdown(
-                        f"""
-                        <div style="
-                            text-align:center;
-                            font-size:30px;
-                            font-weight:bold;
-                        ">
-                            {info["name"]}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
+                        f"### {artist['name']}"
                     )
 
-                    st.write("")
-                    st.write("")
+                # ---------- DELETE ----------
+                with col3:
 
-                    # ---------- REMOVE BUTTON ----------
-                    button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
-
-                    with button_col2:
+                    if is_admin:
 
                         if st.button(
-                            "❌ Remove",
+                            "❌",
                             key=f"delete_{artist['id']}"
                         ):
 
@@ -173,7 +133,8 @@ with st.expander(
 
                             st.rerun()
 
-        st.write("")
+        st.divider()
+        
 
 # ===================================================
 # NEW RELEASES
