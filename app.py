@@ -175,22 +175,29 @@ with st.expander(
 
         st.write("")
 
+
 # ===================================================
 # NEW RELEASES
 # ===================================================
 
-days = st.number_input(
-    "Look back (days)",
-    min_value=1,
-    value=7,
-    key="release_days"
-)
+col1, col2 = st.columns([4, 1])
+
+with col1:
+
+    days = st.number_input(
+        "Look back (days)",
+        min_value=1,
+        value=7,
+        key="release_days"
+    )
+
+with col2:
+
+    use_custom_date = st.toggle(
+        "Custom Date"
+    )
 
 start_datetime = None
-
-use_custom_date = st.checkbox(
-    "Use custom start date"
-)
 
 if use_custom_date:
 
@@ -203,6 +210,7 @@ if use_custom_date:
         datetime.min.time()
     )
 
+
 releases = get_new_releases(
     days=days,
     start_date=start_datetime
@@ -210,19 +218,22 @@ releases = get_new_releases(
 
 badge_count = len(releases)
 
+
 with st.expander(
     f"🎵 New Releases 🔴 {badge_count}"
 ):
 
     if not releases:
 
-        st.info("No releases found.")
+        st.info(
+            "No releases found."
+        )
 
     else:
 
         for release in releases:
 
-            col1, col2 = st.columns([2, 2])
+            col1, col2 = st.columns([2, 3])
 
             with col1:
 
@@ -230,13 +241,13 @@ with st.expander(
 
                     st.image(
                         release["image"],
-                        width = 200
+                        width=200
                     )
 
             with col2:
 
-                st.subheader(
-                    release["album"]
+                st.markdown(
+                    f"## {release['album']}"
                 )
 
                 st.write(
