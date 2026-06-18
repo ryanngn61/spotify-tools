@@ -29,11 +29,19 @@ st.header("🎵 Artist Release Tracker")
 # -------------------
 st.subheader("➕ Add Artist")
 
-artist_link = st.text_input(
-    "Spotify Artist Link"
-)
+col1, col2 = st.columns([6, 1])
 
-if st.button("Add Artist"):
+with col1:
+    artist_link = st.text_input(
+        "Spotify Artist Link",
+        label_visibility="collapsed",
+        placeholder="Paste Spotify artist link..."
+    )
+
+with col2:
+    add_pressed = st.button("Add")
+
+if add_pressed:
 
     try:
 
