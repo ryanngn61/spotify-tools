@@ -178,56 +178,86 @@ with st.expander(
 # ===================================================
 # NEW RELEASES
 # ===================================================
-with st.expander("🎵 Check New Releases"):
 
-    if st.button("Check New Releases"):
+# Default releases (last 7 days)
+default_releases = get_new_releases()
 
-        releases = get_new_releases()
+with st.expander(
+    f"🎵 New Releases ({len(default_releases)})"
+):
 
-        if not releases:
+    col1, col2 = st.columns(2)
 
-            st.info(
-                "No new releases found."
-            )
+    with col1:
 
-        else:
+        days = st.number_input(
+            "Look back (days)",
+            min_value=1,
+            value=7
+        )
 
-            for release in releases:
+    with col2:
 
-                col1, col2 = st.columns(
-                    [1, 3]
+        start_date = st.date_input(
+            "Start date (optional)",
+            value=None
+        )
+
+    # Convert date_input result to datetime
+    start_datetime = None
+
+    if start_date:
+        start_datetime = datetime.combine(
+            start_date,
+            datetime.min.time()
+        )
+
+    releases = get_new_releases(
+        days=days,
+        start_date=start_datetime
+    )
+
+    if not releases:
+
+        st.info(
+            "No releases found."
+        )
+
+    else:
+
+        for release in releases:
+
+            col1, col2 = st.columns([1, 3])
+
+            with col1:
+
+                if release["image"]:
+
+                    st.image(
+                        release["image"],
+                        width=150
+                    )
+
+            with col2:
+
+                st.subheader(
+                    release["album"]
                 )
 
-                with col1:
+                st.write(
+                    f"🎤 {release['artist']}"
+                )
 
-                    if release["image"]:
+                st.write(
+                    f"📅 {release['date']}"
+                )
 
-                        st.image(
-                            release["image"],
-                            width=150
-                        )
+                st.link_button(
+                    "Open in Spotify",
+                    release["url"]
+                )
 
-                with col2:
-
-                    st.subheader(
-                        release["album"]
-                    )
-
-                    st.write(
-                        f"🎤 {release['artist']}"
-                    )
-
-                    st.write(
-                        f"📅 {release['date']}"
-                    )
-
-                    st.link_button(
-                        "Open in Spotify",
-                        release["url"]
-                    )
-
-                st.divider()
-
+            st.divider()
 
 
 # ===================================================
