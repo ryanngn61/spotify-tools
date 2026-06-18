@@ -27,7 +27,7 @@ st.header("🎵 Artist Release Tracker")
 # -------------------
 # ADD ARTIST
 # -------------------
-st.subheader("➕ Add Artist")
+st.subheader("Add Artist")
 
 col1, col2 = st.columns([6, 1])
 
@@ -109,29 +109,32 @@ with st.expander(
 
                     continue
 
-                col1, col2, col3 = st.columns(
-                    [1, 3, 1]
-                )
-
-                with col1:
+                with st.container(border=True):
 
                     if info["image"]:
 
                         st.image(
                             info["image"],
-                            width=70
+                            width=120
                         )
 
-                with col2:
-
-                    st.write(
-                        f"**{info['name']}**"
+                    st.markdown(
+                        f"""
+                        <div style='
+                            text-align:center;
+                            font-size:22px;
+                            font-weight:bold;
+                        '>
+                            {info["name"]}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
                     )
 
-                with col3:
+                    st.write("")
 
                     if st.button(
-                        "❌",
+                        "❌ Remove",
                         key=f"delete_{artist['id']}"
                     ):
 
@@ -141,7 +144,6 @@ with st.expander(
 
                         st.rerun()
 
-        st.divider()
 
 # ===================================================
 # NEW RELEASES
