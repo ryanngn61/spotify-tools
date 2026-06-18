@@ -29,7 +29,7 @@ st.header("🎵 Artist Release Tracker")
 # -------------------
 st.subheader("Add Artist")
 
-col1, col2 = st.columns([10, 1])
+col1, col2 = st.columns([10.5, 1])
 
 with col1:
     artist_link = st.text_input(
@@ -192,7 +192,7 @@ if "release_end_date" not in st.session_state:
 
 
 # ---------- CONTROLS ----------
-col1, col2, col3 = st.columns([1, 4, 0.8])
+col1, col2, col3 = st.columns([1, 5, 0.8])
 
 with col1:
 
