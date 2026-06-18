@@ -127,8 +127,8 @@ with st.expander(
                                     <img
                                         src="{info['image']}"
                                         style="
-                                            width:220px;
-                                            height:220px;
+                                            width:150x;
+                                            height:150px;
                                             object-fit:cover;
                                             border-radius:10px;
                                         "
@@ -230,7 +230,7 @@ with st.expander(
 
                     st.image(
                         release["image"],
-                        width=220
+                        width=250
                     )
 
             with col2:
