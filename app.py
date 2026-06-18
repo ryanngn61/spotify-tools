@@ -82,56 +82,66 @@ with st.expander(
     f"🎧 Release Watchlist ({len(artists)} artists)"
 ):
 
-    for artist in artists:
+    for i in range(0, len(artists), 2):
 
-        try:
+        row_cols = st.columns(2)
 
-            info = get_artist_info(
-                artist["id"]
-            )
+        for j in range(2):
 
-        except:
+            if i + j >= len(artists):
+                break
 
-            st.warning(
-                f"Couldn't load {artist['name']}"
-            )
+            artist = artists[i + j]
 
-            continue
+            with row_cols[j]:
 
-        col1, col2, col3 = st.columns(
-            [1, 4, 1]
-        )
+                try:
 
-        with col1:
+                    info = get_artist_info(
+                        artist["id"]
+                    )
 
-            if info["image"]:
+                except:
 
-                st.image(
-                    info["image"],
-                    width=70
+                    st.warning(
+                        f"Couldn't load {artist['name']}"
+                    )
+
+                    continue
+
+                col1, col2, col3 = st.columns(
+                    [1, 3, 1]
                 )
 
-        with col2:
+                with col1:
 
-            st.write(
-                f"**{info['name']}**"
-            )
+                    if info["image"]:
 
-        with col3:
+                        st.image(
+                            info["image"],
+                            width=70
+                        )
 
-            if st.button(
-                "❌",
-                key=f"delete_{artist['id']}"
-            ):
+                with col2:
 
-                remove_artist(
-                    artist["id"]
-                )
+                    st.write(
+                        f"**{info['name']}**"
+                    )
 
-                st.rerun()
+                with col3:
+
+                    if st.button(
+                        "❌",
+                        key=f"delete_{artist['id']}"
+                    ):
+
+                        remove_artist(
+                            artist["id"]
+                        )
+
+                        st.rerun()
 
         st.divider()
-
 
 # ===================================================
 # NEW RELEASES
