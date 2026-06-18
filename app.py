@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from sheet_utils import (
     get_artists,
     add_artist,
-    remove_artist
+    remove_artist,
+    update_artist_image
 )
 
 from spotify_utils import (
@@ -103,6 +104,20 @@ with st.expander(
                 # ---------- IMAGE ----------
                 with col1:
 
+                    # Repair old artists that don't have an image yet
+                    if not artist["image"]:
+
+                        info = get_artist_info(
+                            artist["id"]
+                        )
+
+                        update_artist_image(
+                            artist["id"],
+                            info["image"]
+                        )
+
+                        artist["image"] = info["image"]
+
                     if artist["image"]:
 
                         st.image(
@@ -120,22 +135,19 @@ with st.expander(
                 # ---------- DELETE ----------
                 with col3:
 
-                    if is_admin:
+                    if st.button(
+                        "❌",
+                        key=f"delete_{artist['id']}"
+                    ):
 
-                        if st.button(
-                            "❌",
-                            key=f"delete_{artist['id']}"
-                        ):
+                        remove_artist(
+                            artist["id"]
+                        )
 
-                            remove_artist(
-                                artist["id"]
-                            )
-
-                            st.rerun()
+                        st.rerun()
 
         st.divider()
         
-
 # ===================================================
 # NEW RELEASES
 # ===================================================
