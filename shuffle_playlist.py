@@ -3,12 +3,15 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
 
+
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 REDIRECT_URI = "https://127.0.0.1:8888/callback/"
 
-from spotipy.oauth2 import SpotifyOAuth
 
+# ======================================================
+# AUTH
+# ======================================================
 auth_manager = SpotifyOAuth(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
@@ -27,7 +30,12 @@ def get_sp():
         auth=token_info["access_token"]
     )
 
-def get_all_tracks(sp, playlist_id)::
+
+# ======================================================
+# GET ALL TRACKS
+# ======================================================
+def get_all_tracks(sp, playlist_id):
+
     tracks = []
 
     results = sp.playlist_items(
@@ -37,6 +45,7 @@ def get_all_tracks(sp, playlist_id)::
     )
 
     while True:
+
         tracks.extend(results["items"])
 
         if results["next"]:
@@ -47,21 +56,32 @@ def get_all_tracks(sp, playlist_id)::
     return tracks
 
 
+# ======================================================
+# EXTRACT PLAYLIST ID
+# ======================================================
 def extract_playlist_id(link):
+
     link = link.split("?")[0]
+
     return link.split("/")[-1]
 
 
-# ======================
-# ASK FOR PLAYLIST
-# ======================
+# ======================================================
+# SHUFFLE PLAYLIST
+# ======================================================
 def shuffle_playlist(playlist_link):
-    
-    sp = get_sp()
-    
-    playlist_id = extract_playlist_id(playlist_link)
 
-    playlist_info = sp.playlist(playlist_id)
+    # Get fresh token every run
+    sp = get_sp()
+
+    playlist_id = extract_playlist_id(
+        playlist_link
+    )
+
+    playlist_info = sp.playlist(
+        playlist_id
+    )
+
     original_name = playlist_info["name"]
 
     new_name = f"{original_name} Shuffled"
@@ -73,12 +93,16 @@ def shuffle_playlist(playlist_link):
 
     existing_playlist_id = None
 
-    results = sp.current_user_playlists(limit=50)
+    results = sp.current_user_playlists(
+        limit=50
+    )
 
     while True:
 
         for playlist in results["items"]:
+
             if playlist["name"] == new_name:
+
                 existing_playlist_id = playlist["id"]
                 break
 
@@ -86,10 +110,14 @@ def shuffle_playlist(playlist_link):
             break
 
         if results["next"]:
+
             results = sp.next(results)
+
         else:
+
             break
 
+    # Create playlist if needed
     if existing_playlist_id is None:
 
         playlist = sp.user_playlist_create(
@@ -103,25 +131,42 @@ def shuffle_playlist(playlist_link):
         print("Created new shuffled playlist.")
 
     else:
+
         print("Using existing shuffled playlist.")
 
-    tracks = get_all_tracks(sp, playlist_id)
+    # Get tracks
+    tracks = get_all_tracks(
+        sp,
+        playlist_id
+    )
 
     track_ids = []
 
     for item in tracks:
+
         track = item["track"]
 
         if track and track["id"]:
-            track_ids.append(track["id"])
+
+            track_ids.append(
+                track["id"]
+            )
 
     print(f"Songs found: {len(track_ids)}")
 
-    random.shuffle(track_ids)
+    random.shuffle(
+        track_ids
+    )
 
-    sp.playlist_replace_items(existing_playlist_id, track_ids[:100])
+    # Replace first 100 songs
+    sp.playlist_replace_items(
+        existing_playlist_id,
+        track_ids[:100]
+    )
 
+    # Add remaining songs
     for i in range(100, len(track_ids), 100):
+
         sp.playlist_add_items(
             existing_playlist_id,
             track_ids[i:i + 100]
@@ -129,6 +174,16 @@ def shuffle_playlist(playlist_link):
 
     print("Done!")
 
+
+# ======================================================
+# LOCAL TESTING
+# ======================================================
 if __name__ == "__main__":
-    playlist_link = input("Paste playlist link: ").strip()
-    shuffle_playlist(playlist_link)
+
+    playlist_link = input(
+        "Paste playlist link: "
+    ).strip()
+
+    shuffle_playlist(
+        playlist_link
+    )
