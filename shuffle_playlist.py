@@ -16,14 +16,18 @@ auth_manager = SpotifyOAuth(
     scope="playlist-read-private playlist-modify-private playlist-modify-public"
 )
 
-token_info = auth_manager.refresh_access_token(
-    st.secrets["SPOTIFY_REFRESH_TOKEN"]
-)
 
-sp = spotipy.Spotify(auth=token_info["access_token"])
+def get_sp():
 
+    token_info = auth_manager.refresh_access_token(
+        st.secrets["SPOTIFY_REFRESH_TOKEN"]
+    )
 
-def get_all_tracks(playlist_id):
+    return spotipy.Spotify(
+        auth=token_info["access_token"]
+    )
+
+def get_all_tracks(sp, playlist_id)::
     tracks = []
 
     results = sp.playlist_items(
@@ -52,7 +56,9 @@ def extract_playlist_id(link):
 # ASK FOR PLAYLIST
 # ======================
 def shuffle_playlist(playlist_link):
-
+    
+    sp = get_sp()
+    
     playlist_id = extract_playlist_id(playlist_link)
 
     playlist_info = sp.playlist(playlist_id)
@@ -99,7 +105,7 @@ def shuffle_playlist(playlist_link):
     else:
         print("Using existing shuffled playlist.")
 
-    tracks = get_all_tracks(playlist_id)
+    tracks = get_all_tracks(sp, playlist_id)
 
     track_ids = []
 
