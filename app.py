@@ -98,7 +98,7 @@ with st.expander(
             with row_cols[j]:
 
                 col1, col2, col3 = st.columns(
-                    [1.2, 3, 0.8]
+                    [1.7, 3, 0.8]
                 )
 
                 # ---------- IMAGE ----------
@@ -122,7 +122,7 @@ with st.expander(
 
                         st.image(
                             artist["image"],
-                            width=100
+                            width=130
                         )
 
                 # ---------- NAME ----------
