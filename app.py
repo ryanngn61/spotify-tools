@@ -27,6 +27,9 @@ is_admin = (
     password == st.secrets["ADMIN_PASSWORD"]
 )
 
+if is_admin:
+    st.success("🔒 Admin Mode Enabled")
+
 # ===================================================
 # ARTIST RELEASE TRACKER
 # ===================================================
