@@ -16,13 +16,6 @@ from spotify_utils import (
 )
 from public_shuffle import public_shuffle
 
-
-st.divider()
-st.header("🌎 Public Playlist Shuffler")
-
-public_shuffle()
-
-
 st.title("🎵 Ryan's Spotify Tools")
 
 password = st.text_input(
@@ -290,6 +283,19 @@ with st.expander(
                 )
 
             st.divider()
+
+
+
+# ===================================================
+# PUBLIC SHUFFLER
+# ===================================================
+if not is_admin:
+
+    st.divider()
+
+    st.header("🌎 Public Playlist Shuffler")
+
+    public_shuffle()
 
     # ===================================================
     # SHUFFLE PLAYLIST
