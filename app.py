@@ -18,61 +18,71 @@ from spotify_utils import (
 
 st.title("🎵 Ryan's Spotify Tools")
 
+password = st.text_input(
+    "Admin Password",
+    type="password"
+)
+
+is_admin = (
+    password == st.secrets["ADMIN_PASSWORD"]
+)
 
 # ===================================================
 # ARTIST RELEASE TRACKER
 # ===================================================
-st.header("🎵 Artist Release Tracker")
 
+if is_admin:
 
-# -------------------
-# ADD ARTIST
-# -------------------
-st.subheader("Add Artist")
+    st.header("🎵 Artist Release Tracker")
 
-col1, col2 = st.columns([10.5, 1])
-
-with col1:
-    artist_link = st.text_input(
-        "Spotify Artist Link",
-        label_visibility="collapsed",
-        placeholder="Paste Spotify artist link..."
-    )
-
-with col2:
-    add_pressed = st.button("Add")
-
-if add_pressed:
-
-    try:
-
-        artist = get_artist_from_link(
-            artist_link
+    # -------------------
+    # ADD ARTIST
+    # -------------------
+    st.subheader("Add Artist")
+    
+    col1, col2 = st.columns([10.5, 1])
+    
+    with col1:
+        artist_link = st.text_input(
+            "Spotify Artist Link",
+            label_visibility="collapsed",
+            placeholder="Paste Spotify artist link..."
         )
-
-        success = add_artist(
-            artist["name"],
-            artist["id"],
-            artist["image"]
-        )
-
-        if success:
-
-            st.success(
-                f"Added {artist['name']}"
+    
+    with col2:
+        add_pressed = st.button("Add")
+    
+    if add_pressed:
+    
+        try:
+    
+            artist = get_artist_from_link(
+                artist_link
             )
-
-            st.rerun()
-
-        else:
-
-            st.warning(
-                "Artist already exists"
+    
+            success = add_artist(
+                artist["name"],
+                artist["id"],
+                artist["image"]
             )
-
-    except Exception as e:
-
-        st.error(e)
+    
+            if success:
+    
+                st.success(
+                    f"Added {artist['name']}"
+                )
+    
+                st.rerun()
+    
+            else:
+    
+                st.warning(
+                    "Artist already exists"
+                )
+    
+        except Exception as e:
+    
+            st.error(e)
 
 
 # ===================================================
@@ -135,16 +145,18 @@ with st.expander(
                 # ---------- DELETE ----------
                 with col3:
 
-                    if st.button(
-                        "❌",
-                        key=f"delete_{artist['id']}"
-                    ):
+                    if is_admin:
+                    
+                        if st.button(
+                            "❌",
+                            key=f"delete_{artist['id']}"
+                        ):
 
-                        remove_artist(
-                            artist["id"]
-                        )
-
-                        st.rerun()
+                            remove_artist(
+                                artist["id"]
+                            )
+    
+                            st.rerun()
 
         st.divider()
         
@@ -269,49 +281,51 @@ with st.expander(
 
             st.divider()
 
-# ===================================================
-# SHUFFLE PLAYLIST
-# ===================================================
-st.divider()
-
-st.header("🔀 Shuffle Playlist")
-
-playlist_link = st.text_input(
-    "Spotify Playlist Link"
-)
-
-if st.button("Shuffle Playlist"):
-
-    if playlist_link:
-
-        shuffle_playlist(
-            playlist_link
-        )
-
-        st.success(
-            "Playlist shuffled!"
-        )
-
-    else:
-
-        st.warning(
-            "Paste a playlist link."
-        )
+    # ===================================================
+    # SHUFFLE PLAYLIST
+    # ===================================================
+if is_admin:   
+    st.divider()
+    
+    st.header("🔀 Shuffle Playlist")
+    
+    playlist_link = st.text_input(
+        "Spotify Playlist Link"
+    )
+    
+    if st.button("Shuffle Playlist"):
+    
+        if playlist_link:
+    
+            shuffle_playlist(
+                playlist_link
+            )
+    
+            st.success(
+                "Playlist shuffled!"
+            )
+    
+        else:
+    
+            st.warning(
+                "Paste a playlist link."
+            )
 
 
 # ===================================================
 # PLAYLIST TOOLS
 # ===================================================
-st.divider()
-
-st.header("📂 Playlist Tools")
-
-if st.button(
-    "Update English Playlist"
-):
-
-    update_english_playlist()
-
-    st.success(
-        "English playlist updated!"
-    )
+if is_admin:
+    st.divider()
+    
+    st.header("📂 Playlist Tools")
+    
+    if st.button(
+        "Update English Playlist"
+    ):
+    
+        update_english_playlist()
+    
+        st.success(
+            "English playlist updated!"
+        )
