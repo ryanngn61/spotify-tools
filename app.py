@@ -163,6 +163,9 @@ if "release_days" not in st.session_state:
 if "release_end_date" not in st.session_state:
     st.session_state.release_end_date = default_date
 
+if "releases" not in st.session_state:
+    st.session_state.releases = []
+
 
 # ---------- CONTROLS ----------
 col1, col2, col3 = st.columns([1, 5, 0.8])
@@ -191,30 +194,30 @@ with col3:
     )
 
 
-# ---------- UPDATE ONLY WHEN BUTTON PRESSED ----------
+# ---------- ONLY CALL SPOTIFY WHEN REFRESH IS PRESSED ----------
 if refresh_pressed:
 
     st.session_state.release_days = days_input
     st.session_state.release_end_date = end_date_input
 
+    end_datetime = datetime.combine(
+        st.session_state.release_end_date,
+        datetime.min.time()
+    )
 
-# ---------- CALCULATE RANGE ----------
-end_datetime = datetime.combine(
-    st.session_state.release_end_date,
-    datetime.min.time()
-)
+    start_datetime = (
+        end_datetime -
+        timedelta(days=st.session_state.release_days)
+    )
 
-start_datetime = (
-    end_datetime -
-    timedelta(days=st.session_state.release_days)
-)
+    st.session_state.releases = get_new_releases(
+        days=st.session_state.release_days,
+        start_date=start_datetime
+    )
 
 
-# ---------- LOAD RELEASES ----------
-releases = get_new_releases(
-    days=st.session_state.release_days,
-    start_date=start_datetime
-)
+# ---------- DISPLAY SAVED RESULTS ----------
+releases = st.session_state.releases
 
 badge_count = len(releases)
 
@@ -227,7 +230,7 @@ with st.expander(
     if not releases:
 
         st.info(
-            "No releases found."
+            "Press Refresh to check for releases."
         )
 
     else:
