@@ -14,6 +14,13 @@ from spotify_utils import (
     get_artist_from_link,
     get_artist_info
 )
+from public_shuffle import public_shuffle
+
+
+st.divider()
+st.header("🌎 Public Playlist Shuffler")
+
+public_shuffle()
 
 
 st.title("🎵 Ryan's Spotify Tools")
