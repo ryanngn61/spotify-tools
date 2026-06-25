@@ -6,148 +6,159 @@ import streamlit as st
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 
-# MUST MATCH SPOTIFY DASHBOARD EXACTLY
 REDIRECT_URI = "https://127.0.0.1:8888/callback/"
 
 # ======================
+
 # PLAYLIST IDS
+
 # ======================
+
 ALL_PLAYLIST_ID = "3FADEfuEpHzQZ0W1YQswAd"
 KPOP_PLAYLIST_ID = "5PmLL2PgjdokVs1YxJpNBs"
 ENGLISH_PLAYLIST_ID = "3BIYwp2n5EBtoQT0BpsOn9"
 
 # ======================
+
 # ARTISTS TO KEEP
+
 # ======================
+
 KEEP_ARTIST_IDS = {
-    "2EoyTW14yqnbqmk90NjbLT",  # PRYVT
-    "6dhfy4ByARPJdPtMyrUYJK",  # Yerin Baek
-    "3eVa5w3URK5duf6eyVDbu9",  # ROSÉ
+"2EoyTW14yqnbqmk90NjbLT",  # PRYVT
+"6dhfy4ByARPJdPtMyrUYJK",  # Yerin Baek
+"3eVa5w3URK5duf6eyVDbu9",  # ROSÉ
 }
 
 # ======================
-# LOGIN
+
+# GET FRESH SPOTIFY CLIENT
+
 # ======================
-from spotipy.oauth2 import SpotifyOAuth
+
+def get_spotify_client():
 
 auth_manager = SpotifyOAuth(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
-    scope="playlist-read-private playlist-modify-private playlist-modify-public"
+    scope=(
+        "playlist-read-private "
+        "playlist-modify-private "
+        "playlist-modify-public"
+    )
 )
 
 token_info = auth_manager.refresh_access_token(
     st.secrets["SPOTIFY_REFRESH_TOKEN"]
 )
 
-sp = spotipy.Spotify(auth=token_info["access_token"])
+return spotipy.Spotify(
+    auth=token_info["access_token"]
+)
 
 
-def get_all_tracks(playlist_id):
-    tracks = []
+def get_all_tracks(playlist_id, sp):
 
-    results = sp.playlist_items(
-        playlist_id,
-        limit=100,
-        additional_types=["track"]
-    )
+tracks = []
 
-    while True:
-        tracks.extend(results["items"])
+results = sp.playlist_items(
+    playlist_id,
+    limit=100,
+    additional_types=["track"]
+)
 
-        if results["next"]:
-            results = sp.next(results)
-        else:
-            break
+while True:
 
-    return tracks
+    tracks.extend(results["items"])
 
+    if results["next"]:
+        results = sp.next(results)
+    else:
+        break
+
+return tracks
 
 def update_english_playlist():
 
-    print("Loading playlists...")
+# Fresh token every run
+sp = get_spotify_client()
 
-    all_music = get_all_tracks(ALL_PLAYLIST_ID)
-    kpop_music = get_all_tracks(KPOP_PLAYLIST_ID)
+print("Loading playlists...")
 
-    print(f"All Music songs: {len(all_music)}")
-    print(f"K-pop songs: {len(kpop_music)}")
+all_music = get_all_tracks(
+    ALL_PLAYLIST_ID,
+    sp
+)
 
-    # ======================
-    # BUILD KPOP SONG SET
-    # ======================
-    kpop_track_ids = set()
+kpop_music = get_all_tracks(
+    KPOP_PLAYLIST_ID,
+    sp
+)
 
-    for item in kpop_music:
-        track = item["track"]
+print(f"All Music songs: {len(all_music)}")
+print(f"K-pop songs: {len(kpop_music)}")
 
-        if track and track["id"]:
-            kpop_track_ids.add(track["id"])
+kpop_track_ids = set()
 
-    # ======================
-    # BUILD ENGLISH PLAYLIST
-    # ======================
-    english_track_ids = []
-    seen = set()
+for item in kpop_music:
 
-    print("Building English playlist...")
+    track = item["track"]
 
-    for item in all_music:
+    if track and track["id"]:
+        kpop_track_ids.add(track["id"])
 
-        track = item["track"]
+english_track_ids = []
+seen = set()
 
-        if not track or not track["id"]:
-            continue
+print("Building English playlist...")
 
-        track_id = track["id"]
+for item in all_music:
 
-        if track_id in seen:
-            continue
+    track = item["track"]
 
-        keep_song = False
+    if not track or not track["id"]:
+        continue
 
-        # Keep if ANY artist is in keep list
-        for artist in track["artists"]:
-            if artist["id"] in KEEP_ARTIST_IDS:
-                keep_song = True
-                break
+    track_id = track["id"]
 
-        # Remove K-pop songs unless exception artist
-        if track_id in kpop_track_ids and not keep_song:
-            continue
+    if track_id in seen:
+        continue
 
-        english_track_ids.append(track_id)
-        seen.add(track_id)
+    keep_song = False
 
-    print(f"English playlist size: {len(english_track_ids)}")
+    for artist in track["artists"]:
 
-    # ======================
-    # SHUFFLE PLAYLIST
-    # ======================
-    print("Shuffling playlist...")
-    random.shuffle(english_track_ids)
+        if artist["id"] in KEEP_ARTIST_IDS:
+            keep_song = True
+            break
 
-    # ======================
-    # UPDATE PLAYLIST
-    # ======================
-    print("Updating playlist...")
+    if track_id in kpop_track_ids and not keep_song:
+        continue
 
-    # Replace first 100 songs
-    sp.playlist_replace_items(
+    english_track_ids.append(track_id)
+    seen.add(track_id)
+
+print(f"English playlist size: {len(english_track_ids)}")
+
+print("Shuffling playlist...")
+random.shuffle(english_track_ids)
+
+print("Updating playlist...")
+
+sp.playlist_replace_items(
+    ENGLISH_PLAYLIST_ID,
+    english_track_ids[:100]
+)
+
+for i in range(100, len(english_track_ids), 100):
+
+    sp.playlist_add_items(
         ENGLISH_PLAYLIST_ID,
-        english_track_ids[:100]
+        english_track_ids[i:i + 100]
     )
 
-    # Add remaining songs in batches of 100
-    for i in range(100, len(english_track_ids), 100):
-        sp.playlist_add_items(
-            ENGLISH_PLAYLIST_ID,
-            english_track_ids[i:i + 100]
-        )
+print("Done!")
 
-    print("Done!")
-
-
-if __name__ == "__main__":
-    update_english_playlist()
+if **name** == "**main**":
+update_english_playlist()
