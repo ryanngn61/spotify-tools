@@ -15,11 +15,7 @@ auth_manager = SpotifyOAuth(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     redirect_uri=REDIRECT_URI,
-    scope=(
-        "playlist-read-private "
-        "playlist-modify-private "
-        "playlist-modify-public"
-    )
+    scope="playlist-read-private playlist-modify-private playlist-modify-public"
 )
 
 def get_sp():
@@ -50,13 +46,9 @@ def get_all_tracks(sp, playlist_id):
             break
     return tracks
 
-# ======================================================
-# CREATE OR UPDATE PLAYLIST
-# ======================================================
 def update_playlist(sp, user_id, playlist_name, track_ids):
     playlist_id = None
     results = sp.current_user_playlists(limit=50)
-
     while True:
         for playlist in results["items"]:
             if playlist["name"] == playlist_name:
@@ -70,11 +62,7 @@ def update_playlist(sp, user_id, playlist_name, track_ids):
             break
 
     if playlist_id is None:
-        playlist = sp.user_playlist_create(
-            user=user_id,
-            name=playlist_name,
-            public=False
-        )
+        playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=False)
         playlist_id = playlist["id"]
 
     if len(track_ids) == 0:
@@ -86,7 +74,7 @@ def update_playlist(sp, user_id, playlist_name, track_ids):
         sp.playlist_add_items(playlist_id, track_ids[i:i + 100])
 
 # ======================================================
-# PLAYLIST SPLITTER & AUDIT TOOL
+# PLAYLIST SPLITTER & EXACT DUPLICATE AUDIT
 # ======================================================
 def split_playlist(playlist_a_link, playlist_b_link):
     sp = get_sp()
@@ -95,100 +83,131 @@ def split_playlist(playlist_a_link, playlist_b_link):
     playlist_b_id = extract_playlist_id(playlist_b_link)
 
     playlist_a_info = sp.playlist(playlist_a_id)
-    output_name = f"{playlist_a_info['name']} Split"
+    output_name = f"{playlist_a_info['name']} Split (Missing Songs)"
 
-    st.markdown(f"### 🕵️‍♂️ Duplicate Audit: `{playlist_a_info['name']}`")
+    st.markdown(f"### 🕵️‍♂️ Advanced Audit: `{playlist_a_info['name']}`")
 
     playlist_a = get_all_tracks(sp, playlist_a_id)
     playlist_b = get_all_tracks(sp, playlist_b_id)
 
-    # Display basic counts
-    col_stats1, col_stats2, col_stats3 = st.columns(3)
-    col_stats1.metric("Playlist A Items", len(playlist_a))
-    col_stats2.metric("Playlist B Items", len(playlist_b))
-    col_stats3.metric("Missing From B", len(playlist_a) - len(playlist_b))
+    # 1. Gather Playlist B lookup
+    playlist_b_lookup = set()
+    for item in playlist_b:
+        if item and "track" in item and item["track"]:
+            track = item["track"]
+            track_name = track.get("name", "").lower().strip()
+            artist_name = track["artists"][0]["name"].lower().strip() if track.get("artists") else ""
+            if track_name:
+                playlist_b_lookup.add(f"{track_name} ||| {artist_name}")
 
     # --------------------------------------------------
-    # 1. COUNT OCCURRENCES IN PLAYLIST A
+    # 2. COUNT EXACT OCCURRENCES IN PLAYLIST A
     # --------------------------------------------------
-    track_id_counts = Counter()
-    track_details = {} 
+    track_counts = Counter()
+    track_details = {}
+    local_tracks_a = []
 
     for item in playlist_a:
         if not item or "track" not in item or not item["track"]:
             continue
-        
+            
         track = item["track"]
-        if "id" in track and track["id"]:
-            track_id = track["id"]
-            track_id_counts[track_id] += 1
-            
-            if track_id not in track_details:
-                artist_name = track["artists"][0]["name"] if track["artists"] else "Unknown Artist"
-                track_details[track_id] = {
-                    "name": track["name"],
-                    "artist": artist_name,
-                    "url": track["external_urls"].get("spotify", "")
-                }
+        track_name = track.get("name", "Unknown Title").strip()
+        artist_name = track["artists"][0]["name"].strip() if track.get("artists") else "Unknown Artist"
+        track_key = f"{track_name.lower()} ||| {artist_name.lower()}"
+        track_id = track.get("id")
+        is_local = item.get("is_local", False) or (track_id and "local" in str(track_id))
+
+        if is_local:
+            local_tracks_a.append(f"📁 {track_name} — *{artist_name}*")
+            continue
+
+        # Count occurrences of normal tracks
+        track_counts[track_key] += 1
+        
+        # Save track metadata for display
+        if track_key not in track_details:
+            track_details[track_key] = {
+                "name": track_name,
+                "artist": artist_name,
+                "id": track_id,
+                "url": track.get("external_urls", {}).get("spotify", "")
+            }
+
+    # Identify the actual duplicate entries (items with count > 1)
+    duplicate_items = {k: v for k, v in track_counts.items() if v > 1}
+    total_duplicate_extra_copies = sum(count - 1 for count in duplicate_items.values())
 
     # --------------------------------------------------
-    # 2. DISPLAY DUPLICATES DIRECTLY IN APP
+    # 3. IDENTIFY TRULY MISSING SONGS
     # --------------------------------------------------
-    duplicates = {tid: count for tid, count in track_id_counts.items() if count > 1}
+    missing_tracks_from_b = []
+    unique_output_track_ids = []
+
+    for track_key, count in track_counts.items():
+        # Check if missing from B
+        if track_key not in playlist_b_lookup:
+            details = track_details[track_key]
+            missing_tracks_from_b.append(details)
+            if details["id"]:
+                unique_output_track_ids.append(details["id"])
+
+    # --------------------------------------------------
+    # DISPLAY METRICS CARD BREAKDOWN
+    # --------------------------------------------------
+    col_a, col_b, col_gap = st.columns(3)
+    col_a.metric("Playlist A Total Items", len(playlist_a))
+    col_b.metric("Playlist B Total Items", len(playlist_b))
+    col_gap.metric("Total Gap Size", len(playlist_a) - len(playlist_b))
+
+    st.markdown("#### 📊 Explaining the Gap:")
+    col_dup, col_loc, col_miss = st.columns(3)
+    col_dup.metric("Extra Duplicate Copies", total_duplicate_extra_copies)
+    col_loc.metric("Local Files Found", len(local_tracks_a))
+    col_miss.metric("True Missing Online Songs", len(missing_tracks_from_b))
+
+    # --------------------------------------------------
+    # DISPLAY DRILLDOWN LISTS
+    # --------------------------------------------------
     
+    # Section 1: Exact Duplicates List
     st.write("---")
-    st.subheader(f"🚨 Found Duplicates ({len(duplicates)} unique tracks duplicate)")
-    
-    total_duplicate_copies = 0
-    if not duplicates:
-        st.success("✅ No duplicate track IDs found in Playlist A!")
-    else:
-        for tid, count in duplicates.items():
-            details = track_details[tid]
-            extra_copies = count - 1
-            total_duplicate_copies += extra_copies
-            
-            col_song, col_link = st.columns([5, 1])
-            with col_song:
-                st.markdown(f"**[{count}x copies]** {details['name']} — *{details['artist']}*")
-            with col_link:
-                if details['url']:
-                    st.markdown(f"[Listen 🔗]({details['url']})")
-                    
-        st.warning(f"📊 **Summary:** There are **{total_duplicate_copies} extra placeholder copies** cluttering up Playlist A.")
-    
-    # --------------------------------------------------
-    # 3. BACKGROUND SUBTRACTION LOGIC (A - B)
-    # --------------------------------------------------
-    playlist_b_ids = set()
-    for item in playlist_b:
-        if item and "track" in item and item["track"] and item["track"]["id"]:
-            playlist_b_ids.add(item["track"]["id"])
+    with st.expander(f"🌀 Exact Duplicate Songs Found ({len(duplicate_items)} unique tracks have duplicates)", expanded=True):
+        if duplicate_items:
+            for track_key, count in duplicate_items.items():
+                details = track_details[track_key]
+                col_song, col_link = st.columns([5, 1])
+                with col_song:
+                    st.markdown(f"**[{count}x copies]** {details['name']} — *{details['artist']}*")
+                with col_link:
+                    if details['url']:
+                        st.markdown(f"[Open 🔗]({details['url']})")
+        else:
+            st.success("✅ Clean! No duplicate track names found in Playlist A.")
 
-    output_track_ids = []
-    seen_in_a = set()
+    # Section 2: Local Files
+    with st.expander(f"📁 Local Files in Playlist A ({len(local_tracks_a)})", expanded=False):
+        if local_tracks_a:
+            for track in local_tracks_a:
+                st.markdown(track)
+        else:
+            st.success("No local files found.")
 
-    for item in playlist_a:
-        if not item or "track" not in item or not item["track"] or not item["track"]["id"]:
-            continue
-        track_id = item["track"]["id"]
+    # Section 3: Genuinely Missing Songs
+    with st.expander(f"❌ True Missing Songs from Playlist B ({len(missing_tracks_from_b)})", expanded=False):
+        if not missing_tracks_from_b:
+            st.success("No true missing online songs found!")
+        else:
+            for track in missing_tracks_from_b:
+                col_song, col_link = st.columns([5, 1])
+                with col_song:
+                    st.markdown(f"👉 **{track['name']}** — *{track['artist']}*")
+                with col_link:
+                    if track['url']:
+                        st.markdown(f"[Open 🔗]({track['url']})")
 
-        if track_id in seen_in_a:
-            continue
-        seen_in_a.add(track_id)
-
-        if track_id in playlist_b_ids:
-            continue
-
-        output_track_ids.append(track_id)
-
-    st.write("---")
-    
-    if len(output_track_ids) > 0:
-        st.info(f"✂️ Found **{len(output_track_ids)} unique tracks** in Playlist A that were completely missing from Playlist B.")
-        user_id = sp.current_user()["id"]
-        random.shuffle(output_track_ids)
-        update_playlist(sp, user_id, output_name, output_track_ids)
-        st.success(f"🎉 Created fresh `{output_name}` playlist with those missing items!")
-    else:
-        st.success("ℹ️ No unlinked tracks found! The math matches: the entire gap was caused entirely by duplicate songs.")
+            if unique_output_track_ids:
+                user_id = sp.current_user()["id"]
+                random.shuffle(unique_output_track_ids)
+                update_playlist(sp, user_id, output_name, unique_output_track_ids)
+                st.success(f"🎉 Created fresh `{output_name}` playlist with these true missing items!")
