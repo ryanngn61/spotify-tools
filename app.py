@@ -15,6 +15,9 @@ from spotify_utils import (
     get_artist_info
 )
 from public_shuffle import public_shuffle
+from playlist_splitter import split_playlist
+
+
 
 st.title("🎵 Ryan's Spotify Tools")
 
@@ -345,3 +348,38 @@ if is_admin:
         st.success(
             "English playlist updated!"
         )
+        
+    st.divider()
+    
+    st.subheader("➖ Playlist Splitter")
+    
+    playlist_a_link = st.text_input(
+        "Playlist A Link",
+        key="playlist_a"
+    )
+    
+    playlist_b_link = st.text_input(
+        "Playlist B Link",
+        key="playlist_b"
+    )
+    
+    if st.button(
+        "Create Split Playlist"
+    ):
+    
+        if playlist_a_link and playlist_b_link:
+    
+            split_playlist(
+                playlist_a_link,
+                playlist_b_link
+            )
+    
+            st.success(
+                "Split playlist created!"
+            )
+    
+        else:
+    
+            st.warning(
+                "Paste both playlist links."
+            )
