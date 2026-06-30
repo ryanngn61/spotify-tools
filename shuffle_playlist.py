@@ -67,6 +67,58 @@ def extract_playlist_id(link):
 
 
 # ======================================================
+# CREATE / UPDATE PLAYLIST
+# ======================================================
+def update_playlist(sp, user_id, playlist_name, track_ids):
+
+    playlist_id = None
+
+    results = sp.current_user_playlists(limit=50)
+
+    while True:
+
+        for playlist in results["items"]:
+
+            if playlist["name"] == playlist_name:
+                playlist_id = playlist["id"]
+                break
+
+        if playlist_id:
+            break
+
+        if results["next"]:
+            results = sp.next(results)
+        else:
+            break
+
+    if playlist_id is None:
+
+        playlist = sp.user_playlist_create(
+            user=user_id,
+            name=playlist_name,
+            public=False
+        )
+
+        playlist_id = playlist["id"]
+
+    # Empty playlist if nothing to add
+    if len(track_ids) == 0:
+        sp.playlist_replace_items(playlist_id, [])
+        return
+
+    sp.playlist_replace_items(
+        playlist_id,
+        track_ids[:100]
+    )
+
+    for i in range(100, len(track_ids), 100):
+
+        sp.playlist_add_items(
+            playlist_id,
+            track_ids[i:i + 100]
+        )
+
+# ======================================================
 # SHUFFLE PLAYLIST
 # ======================================================
 def shuffle_playlist(playlist_link):
@@ -141,37 +193,46 @@ def shuffle_playlist(playlist_link):
     )
 
     track_ids = []
+    duplicate_track_ids = []
+    seen = set()
 
     for item in tracks:
-
+    
         track = item["track"]
-
-        if track and track["id"]:
-
-            track_ids.append(
-                track["id"]
-            )
+    
+        if not track or not track["id"]:
+            continue
+    
+        track_id = track["id"]
+    
+        if track_id in seen:
+            duplicate_track_ids.append(track_id)
+            continue
+    
+        seen.add(track_id)
+        track_ids.append(track_id)
 
     print(f"Songs found: {len(track_ids)}")
-
-    random.shuffle(
+    print(f"Duplicates found: {len(duplicate_track_ids)}")
+    
+    random.shuffle(track_ids)
+    
+    # Update shuffled playlist
+    update_playlist(
+        sp,
+        user_id,
+        new_name,
         track_ids
     )
-
-    # Replace first 100 songs
-    sp.playlist_replace_items(
-        existing_playlist_id,
-        track_ids[:100]
+    
+    # Update duplicates playlist
+    update_playlist(
+        sp,
+        user_id,
+        f"{original_name} Duplicates",
+        duplicate_track_ids
     )
-
-    # Add remaining songs
-    for i in range(100, len(track_ids), 100):
-
-        sp.playlist_add_items(
-            existing_playlist_id,
-            track_ids[i:i + 100]
-        )
-
+    
     print("Done!")
 
 
