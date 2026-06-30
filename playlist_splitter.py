@@ -1,12 +1,94 @@
-from collections import Counter
-import streamlit as st
 import random
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+import streamlit as st
+from collections import Counter
 
-def split_playlist(
-    playlist_a_link,
-    playlist_b_link
-):
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+REDIRECT_URI = "https://127.0.0.1:8888/callback/"
 
+# ======================================================
+# AUTH
+# ======================================================
+auth_manager = SpotifyOAuth(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    redirect_uri=REDIRECT_URI,
+    scope=(
+        "playlist-read-private "
+        "playlist-modify-private "
+        "playlist-modify-public"
+    )
+)
+
+def get_sp():
+    token_info = auth_manager.refresh_access_token(
+        st.secrets["SPOTIFY_REFRESH_TOKEN"]
+    )
+    return spotipy.Spotify(auth=token_info["access_token"])
+
+# ======================================================
+# HELPERS
+# ======================================================
+def extract_playlist_id(link):
+    link = link.split("?")[0]
+    return link.split("/")[-1]
+
+def get_all_tracks(sp, playlist_id):
+    tracks = []
+    results = sp.playlist_items(
+        playlist_id,
+        limit=100,
+        additional_types=["track"]
+    )
+    while True:
+        tracks.extend(results["items"])
+        if results["next"]:
+            results = sp.next(results)
+        else:
+            break
+    return tracks
+
+# ======================================================
+# CREATE OR UPDATE PLAYLIST
+# ======================================================
+def update_playlist(sp, user_id, playlist_name, track_ids):
+    playlist_id = None
+    results = sp.current_user_playlists(limit=50)
+
+    while True:
+        for playlist in results["items"]:
+            if playlist["name"] == playlist_name:
+                playlist_id = playlist["id"]
+                break
+        if playlist_id:
+            break
+        if results["next"]:
+            results = sp.next(results)
+        else:
+            break
+
+    if playlist_id is None:
+        playlist = sp.user_playlist_create(
+            user=user_id,
+            name=playlist_name,
+            public=False
+        )
+        playlist_id = playlist["id"]
+
+    if len(track_ids) == 0:
+        sp.playlist_replace_items(playlist_id, [])
+        return
+
+    sp.playlist_replace_items(playlist_id, track_ids[:100])
+    for i in range(100, len(track_ids), 100):
+        sp.playlist_add_items(playlist_id, track_ids[i:i + 100])
+
+# ======================================================
+# PLAYLIST SPLITTER & AUDIT TOOL
+# ======================================================
+def split_playlist(playlist_a_link, playlist_b_link):
     sp = get_sp()
 
     playlist_a_id = extract_playlist_id(playlist_a_link)
@@ -61,13 +143,11 @@ def split_playlist(
     if not duplicates:
         st.success("✅ No duplicate track IDs found in Playlist A!")
     else:
-        # Create a scrollable or clean text area breakdown
         for tid, count in duplicates.items():
             details = track_details[tid]
             extra_copies = count - 1
             total_duplicate_copies += extra_copies
             
-            # Render a nice clean row for each duplicate song
             col_song, col_link = st.columns([5, 1])
             with col_song:
                 st.markdown(f"**[{count}x copies]** {details['name']} — *{details['artist']}*")
@@ -104,7 +184,6 @@ def split_playlist(
 
     st.write("---")
     
-    # If tracks are truly missing from B that aren't duplicates, they will build a playlist here
     if len(output_track_ids) > 0:
         st.info(f"✂️ Found **{len(output_track_ids)} unique tracks** in Playlist A that were completely missing from Playlist B.")
         user_id = sp.current_user()["id"]
