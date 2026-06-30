@@ -9,15 +9,12 @@ from sheet_utils import (
     remove_artist,
     update_artist_image
 )
-
 from spotify_utils import (
     get_artist_from_link,
     get_artist_info
 )
 from public_shuffle import public_shuffle
 from playlist_splitter import split_playlist
-
-
 
 st.title("🎵 Ryan's Spotify Tools")
 
@@ -34,11 +31,9 @@ if is_admin:
     st.success("🔒 Admin Mode Enabled")
 
 # ===================================================
-# ARTIST RELEASE TRACKER
+# ARTIST RELEASE TRACKER (Admin Only)
 # ===================================================
-
 if is_admin:
-
     st.header("🎵 Artist Release Tracker")
 
     # -------------------
@@ -59,122 +54,69 @@ if is_admin:
         add_pressed = st.button("Add")
     
     if add_pressed:
-    
         try:
-    
-            artist = get_artist_from_link(
-                artist_link
-            )
-    
+            artist = get_artist_from_link(artist_link)
             success = add_artist(
                 artist["name"],
                 artist["id"],
                 artist["image"]
             )
-    
+            
             if success:
-    
-                st.success(
-                    f"Added {artist['name']}"
-                )
-    
+                st.success(f"Added {artist['name']}")
                 st.rerun()
-    
             else:
-    
-                st.warning(
-                    "Artist already exists"
-                )
-    
+                st.warning("Artist already exists")
         except Exception as e:
-    
             st.error(e)
 
 
 # ===================================================
-# WATCHLIST
+# WATCHLIST (Public)
 # ===================================================
 artists = get_artists()
 
-with st.expander(
-    f"🎧 Release Watchlist ({len(artists)} artists)"
-):
-
+with st.expander(f"🎧 Release Watchlist ({len(artists)} artists)"):
     for i in range(0, len(artists), 2):
-
         row_cols = st.columns(2)
-
         for j in range(2):
-
             if i + j >= len(artists):
                 break
 
             artist = artists[i + j]
 
             with row_cols[j]:
-
-                col1, col2, col3 = st.columns(
-                    [1.7, 3, 0.8]
-                )
+                col1, col2, col3 = st.columns([1.7, 3, 0.8])
 
                 # ---------- IMAGE ----------
                 with col1:
-
-                    # Repair old artists that don't have an image yet
                     if not artist["image"]:
-
-                        info = get_artist_info(
-                            artist["id"]
-                        )
-
-                        update_artist_image(
-                            artist["id"],
-                            info["image"]
-                        )
-
+                        info = get_artist_info(artist["id"])
+                        update_artist_image(artist["id"], info["image"])
                         artist["image"] = info["image"]
 
                     if artist["image"]:
-
-                        st.image(
-                            artist["image"],
-                            width=130
-                        )
+                        st.image(artist["image"], width=130)
 
                 # ---------- NAME ----------
                 with col2:
-
-                    st.markdown(
-                        f"### {artist['name']}"
-                    )
+                    st.markdown(f"### {artist['name']}")
 
                 # ---------- DELETE ----------
                 with col3:
-
                     if is_admin:
-                    
-                        if st.button(
-                            "❌",
-                            key=f"delete_{artist['id']}"
-                        ):
-
-                            remove_artist(
-                                artist["id"]
-                            )
-    
+                        if st.button("❌", key=f"delete_{artist['id']}"):
+                            remove_artist(artist["id"])
                             st.rerun()
-
         st.divider()
         
-# ===================================================
-# NEW RELEASES
-# ===================================================
 
-# ---------- DEFAULT VALUES ----------
+# ===================================================
+# NEW RELEASES (Public)
+# ===================================================
 default_days = 7
 default_date = datetime.today()
 
-# ---------- SESSION STATE ----------
 if "release_days" not in st.session_state:
     st.session_state.release_days = default_days
 
@@ -184,12 +126,10 @@ if "release_end_date" not in st.session_state:
 if "releases" not in st.session_state:
     st.session_state.releases = []
 
-
 # ---------- CONTROLS ----------
 col1, col2, col3 = st.columns([1, 5, 0.8])
 
 with col1:
-
     days_input = st.number_input(
         "Days",
         min_value=1,
@@ -198,7 +138,6 @@ with col1:
     )
 
 with col2:
-
     end_date_input = st.date_input(
         "End Date",
         value=st.session_state.release_end_date,
@@ -206,15 +145,9 @@ with col2:
     )
 
 with col3:
+    refresh_pressed = st.button("Refresh")
 
-    refresh_pressed = st.button(
-        "Refresh"
-    )
-
-
-# ---------- ONLY CALL SPOTIFY WHEN REFRESH IS PRESSED ----------
 if refresh_pressed:
-
     st.session_state.release_days = days_input
     st.session_state.release_end_date = end_date_input
 
@@ -222,164 +155,86 @@ if refresh_pressed:
         st.session_state.release_end_date,
         datetime.min.time()
     )
-
-    start_datetime = (
-        end_datetime -
-        timedelta(days=st.session_state.release_days)
-    )
+    start_datetime = end_datetime - timedelta(days=st.session_state.release_days)
 
     st.session_state.releases = get_new_releases(
         days=st.session_state.release_days,
         start_date=start_datetime
     )
 
-
-# ---------- DISPLAY SAVED RESULTS ----------
 releases = st.session_state.releases
-
 badge_count = len(releases)
 
-
-# ---------- RELEASE DISPLAY ----------
-with st.expander(
-    f"🎵 New Releases 🔴 {badge_count}"
-):
-
+with st.expander(f"🎵 New Releases 🔴 {badge_count}"):
     if not releases:
-
-        st.info(
-            "Press Refresh to check for releases."
-        )
-
+        st.info("Press Refresh to check for releases.")
     else:
-
         for release in releases:
-
             col1, col2 = st.columns([2, 3])
-
             with col1:
-
                 if release["image"]:
-
-                    st.image(
-                        release["image"],
-                        width=200
-                    )
-
+                    st.image(release["image"], width=200)
             with col2:
-
-                st.markdown(
-                    f"## {release['album']}"
-                )
-
-                st.write(
-                    f"🎤 {release['artist']}"
-                )
-
-                st.write(
-                    f"📅 {release['date']}"
-                )
-
-                st.link_button(
-                    "Open in Spotify",
-                    release["url"]
-                )
-
+                st.markdown(f"## {release['album']}")
+                st.write(f"🎤 {release['artist']}")
+                st.write(f"📅 {release['date']}")
+                st.link_button("Open in Spotify", release["url"])
             st.divider()
 
 
-
 # ===================================================
-# PUBLIC SHUFFLER
+# PUBLIC SHUFFLER (Non-Admins Only)
 # ===================================================
 if not is_admin:
-
     st.divider()
-
     st.header("🌎 Public Playlist Shuffler")
-
     public_shuffle()
 
-    # ===================================================
-    # SHUFFLE PLAYLIST
-    # ===================================================
+
+# ===================================================
+# SHUFFLE PLAYLIST (Admin Only)
+# ===================================================
 if is_admin:   
     st.divider()
-    
     st.header("🔀 Shuffle Playlist")
     
-    playlist_link = st.text_input(
-        "Spotify Playlist Link"
-    )
-    
+    playlist_link = st.text_input("Spotify Playlist Link")
     if st.button("Shuffle Playlist"):
-    
         if playlist_link:
-    
-            shuffle_playlist(
-                playlist_link
-            )
-    
-            st.success(
-                "Playlist shuffled!"
-            )
-    
+            shuffle_playlist(playlist_link)
+            st.success("Playlist shuffled!")
         else:
-    
-            st.warning(
-                "Paste a playlist link."
-            )
+            st.warning("Paste a playlist link.")
 
 
 # ===================================================
-# PLAYLIST TOOLS
+# PLAYLIST TOOLS & SPLITTER (Public)
 # ===================================================
+st.divider()
+st.header("📂 Playlist Tools")
+
+# Keep this button admin-only if updating playlists requires master keys
 if is_admin:
-    st.divider()
-    
-    st.header("📂 Playlist Tools")
-    
-    if st.button(
-        "Update English Playlist"
-    ):
-    
+    if st.button("Update English Playlist"):
         update_english_playlist()
-    
-        st.success(
-            "English playlist updated!"
-        )
-        
+        st.success("English playlist updated!")
     st.divider()
     
-    st.subheader("➖ Playlist Splitter")
-    
-    playlist_a_link = st.text_input(
-        "Playlist A Link",
-        key="playlist_a"
-    )
-    
-    playlist_b_link = st.text_input(
-        "Playlist B Link",
-        key="playlist_b"
-    )
-    
-    if st.button(
-        "Create Split Playlist"
-    ):
-    
-        if playlist_a_link and playlist_b_link:
-    
-            split_playlist(
-                playlist_a_link,
-                playlist_b_link
-            )
-    
-            st.success(
-                "Split playlist created!"
-            )
-    
-        else:
-    
-            st.warning(
-                "Paste both playlist links."
-            )
+st.subheader("➖ Playlist Splitter")
+
+playlist_a_link = st.text_input(
+    "Playlist A Link",
+    key="playlist_a"
+)
+
+playlist_b_link = st.text_input(
+    "Playlist B Link",
+    key="playlist_b"
+)
+
+if st.button("Create Split Playlist"):
+    if playlist_a_link and playlist_b_link:
+        split_playlist(playlist_a_link, playlist_b_link)
+        st.success("Split playlist created!")
+    else:
+        st.warning("Paste both playlist links.")
